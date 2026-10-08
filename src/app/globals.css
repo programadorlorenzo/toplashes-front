@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/*
+  TOP LASHES PERÚ — Design Tokens
+  Paleta extraída del logotipo oficial:
+  - Fondo del logo: #A69A8D (taupe cálido)
+  - Texto del logo: #E8E0D4 (marfil/crema)
+  - Variaciones derivadas para profundidad y contraste
+  - Identidad: minimalista, elegante, sofisticada, premium
+*/
+
+:root {
+  /* === Colores extraídos directamente del logotipo === */
+  --tl-taupe: 28 11% 60%;
+  --tl-taupe-dark: 24 10% 48%;
+  --tl-taupe-deeper: 22 12% 38%;
+  --tl-ivory: 34 27% 87%;
+  --tl-cream: 36 30% 93%;
+  --tl-cream-warm: 33 25% 90%;
+
+  /* === Variaciones elegantes === */
+  --tl-beige: 30 18% 85%;
+  --tl-beige-light: 32 22% 92%;
+  --tl-sand: 28 14% 78%;
+  --tl-gold: 32 28% 55%;
+  --tl-gold-soft: 32 22% 65%;
+  --tl-brown-dark: 22 18% 22%;
+  --tl-brown: 24 14% 34%;
+  --tl-brown-medium: 25 12% 45%;
+  --tl-charcoal: 20 8% 28%;
+  --tl-warm-white: 38 40% 97%;
+  --tl-rose-muted: 8 15% 72%;
+
+  /* === Semánticos — Modo claro === */
+  --background: var(--tl-warm-white);
+  --foreground: var(--tl-charcoal);
+  --card: 36 35% 98%;
+  --card-foreground: var(--tl-brown-dark);
+  --primary: var(--tl-taupe);
+  --primary-foreground: 36 35% 97%;
+  --secondary: var(--tl-beige);
+  --secondary-foreground: var(--tl-brown-dark);
+  --muted: var(--tl-cream);
+  --muted-foreground: var(--tl-brown-medium);
+  --accent: var(--tl-gold);
+  --accent-foreground: 36 35% 97%;
+  --border: 30 14% 84%;
+  --input: 30 14% 87%;
+  --ring: var(--tl-gold-soft);
+  --destructive: 0 68% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 152 45% 40%;
+  --success-foreground: 0 0% 100%;
+  --warning: 36 85% 52%;
+  --warning-foreground: 0 0% 100%;
+  --info: 215 70% 55%;
+  --info-foreground: 0 0% 100%;
+
+  /* === Sidebar — inspirado en el fondo del logo === */
+  --sidebar-bg: var(--tl-taupe);
+  --sidebar-text: var(--tl-ivory);
+  --sidebar-active: var(--tl-taupe-dark);
+  --sidebar-active-text: var(--tl-cream);
+  --sidebar-hover: 26 10% 55%;
+  --sidebar-muted: 28 10% 68%;
+}
+
+[data-mantine-color-scheme="dark"] {
+  --background: 22 10% 11%;
+  --foreground: 34 20% 88%;
+  --card: 22 10% 15%;
+  --card-foreground: 34 20% 88%;
+  --primary: var(--tl-gold-soft);
+  --primary-foreground: 22 10% 11%;
+  --secondary: 22 10% 18%;
+  --secondary-foreground: 34 18% 82%;
+  --muted: 22 10% 16%;
+  --muted-foreground: 28 8% 55%;
+  --accent: var(--tl-gold);
+  --accent-foreground: 34 20% 95%;
+  --border: 22 8% 22%;
+  --input: 22 8% 20%;
+  --ring: var(--tl-gold-soft);
+
+  --sidebar-bg: 22 10% 13%;
+  --sidebar-text: 34 18% 80%;
+  --sidebar-active: var(--tl-gold);
+  --sidebar-active-text: 22 10% 11%;
+  --sidebar-hover: 22 10% 18%;
+  --sidebar-muted: 28 8% 50%;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-destructive: hsl(var(--destructive));
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
+  --color-info: hsl(var(--info));
+  --color-sidebar-bg: hsl(var(--sidebar-bg));
+  --color-sidebar-text: hsl(var(--sidebar-text));
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

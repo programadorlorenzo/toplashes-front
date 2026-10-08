@@ -1,0 +1,31 @@
+---
+description: Absolute restrictions — never merge PRs, never run migrations. Applies to ALL repos.
+alwaysApply: true
+---
+
+# NEVER Merge Pull Requests
+
+This is an absolute rule with zero exceptions:
+
+- NEVER run `gh pr merge` or any command that merges a PR
+- NEVER approve PRs via CLI or API (`gh pr review --approve`, etc.)
+- Your job ends at creating the PR and providing the link
+- The human reviews, approves, and merges manually
+
+This applies to ALL repos in all workspaces.
+
+# NEVER Execute Migration Commands
+
+This is an absolute rule with zero exceptions:
+
+- NEVER run `migration:generate`, `migration:generate:local`, or any variant
+- NEVER run `migration:run`, `migration:run:local`, or any variant
+- NEVER run `migration:revert`, `migration:revert:local`, or any variant
+- NEVER run any TypeORM, Prisma, Knex, or other ORM migration CLI command
+
+Your job ends at:
+1. Design/modify entities or schema files
+2. Provide the exact command for the human to run
+3. Wait for the human to confirm the result
+
+This applies regardless of whether the target is local or production. Only the human runs migration commands, always.

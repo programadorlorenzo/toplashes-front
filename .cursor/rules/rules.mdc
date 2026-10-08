@@ -1,0 +1,108 @@
+---
+alwaysApply: true
+---
+
+## Estilo y estructura del código
+- No usar `any`. Todo debe estar tipado con `interface`.
+- **Tipado estricto obligatorio:** Todo el código debe estar estrictamente tipado usando interfaces y enums del API autogenerado.
+
+---
+
+## Uso OBLIGATORIO del API autogenerado
+- **CRÍTICO:** Todo el API está generado con **OpenAPI** y se encuentra en `src/generated-client/`.
+- **ANTES de cualquier cambio en el frontend**, si el backend ha sido modificado, ejecutar:
+  ```bash
+  pnpm run api
+  ```
+- **NUNCA crear interfaces, tipos o enums** que ya existen en el API generado.
+- **SIEMPRE usar directamente** los tipos del API generado:
+  - ❌ **PROHIBIDO:** `interface User { ... }` cuando ya existe en el API
+  - ✅ **CORRECTO:** `import { UserResponseDto } from '@/generated-client'`
+- **CERO casteos (`as`)** en el código.
+- **Interfaces locales SOLO permitidas** cuando no existe en el API o son tipos auxiliares de UI.
+- **Flujo de trabajo obligatorio:**
+  1. Modificar backend
+  2. Ejecutar `pnpm run api` en frontend
+  3. Usar los tipos del API generado
+  4. Implementar cambios en frontend
+
+---
+
+## URL base del API backend
+- **La URL base se define ÚNICAMENTE en `src/lib/api.ts`** mediante `API_BASE_URL`.
+- **PROHIBIDO hardcodear** URLs del backend en componentes.
+- **SIEMPRE importar `API_BASE_URL`** desde `@/lib/api`.
+
+---
+
+## Gestión del proyecto
+- Este proyecto usa `pnpm`.
+- **PROHIBIDO TERMINANTEMENTE iniciar servidores.** No ejecutar:
+  - `pnpm run dev`
+  - `pnpm run start`
+  - `pnpm run build`
+- **El backend y frontend SIEMPRE están corriendo manualmente** por el usuario.
+- **Para regenerar el API:** Solo ejecutar `pnpm run api`.
+- No crear archivos Markdown sin petición expresa.
+
+---
+
+## Mantine UI - Componentes de interfaz
+- **Este proyecto usa Mantine UI** para todos los componentes de interfaz.
+- **PROHIBIDO crear componentes wrapper** para componentes que Mantine ya provee.
+- **SIEMPRE importar directamente** desde `@mantine/core`.
+- **Formularios con @mantine/form** y `@mantine/notifications` para notificaciones.
+
+---
+
+## Validación del código
+- **Cualquier cambio debe ser validado:**
+  - Ejecutar `pnpm run format`.
+  - Ejecutar `pnpm run lint`.
+  - Ejecutar `npx tsc --noEmit`.
+  - **Verificar que ningún archivo supere las 300 líneas.**
+
+---
+
+## Estructura de componentes
+- **Componentes de Mantine:** Importar directo, NO crear `src/components/ui/`.
+- **Componentes estructurales** (Sidebar, Header): en `src/components/`.
+- **Componentes específicos de módulo**: en `app/[modulo]/components/`.
+- Cada componente en su propio archivo.
+
+---
+
+## Zustand - Gestión de Estado Global
+- **Usar Zustand** para estados compartidos.
+- Stores en `src/stores/`.
+- **Usar `persist` middleware** para auth y branch selection.
+- **PROHIBIDO:** Context API o Redux para estado global.
+
+---
+
+## Identidad visual de Top Lashes Perú
+- La aplicación usa una paleta beige/taupe/marfil definida en `globals.css`.
+- Tipografía serif elegante para títulos (`Playfair Display`).
+- Tipografía legible para contenido (`Inter`).
+- **NO usar colores genéricos** ni la paleta de otros proyectos.
+- Mantener la identidad premium, minimalista y elegante.
+- Toda referencia comercial debe decir "Top Lashes Perú", nunca otro nombre.
+
+---
+
+## Manejo de fechas con Luxon
+- **SIEMPRE usar Luxon** (`DateTime`). **PROHIBIDO usar `new Date()` directamente.**
+- Usar funciones de `@/lib/date-utils`.
+- Zona horaria: `America/Lima`.
+
+---
+
+## Aislamiento por sucursal
+- El frontend debe respetar el local activo del `branch-store`.
+- Filtrar datos según el local seleccionado.
+- Usuarios con acceso a un solo local no deben poder ver datos de otros locales.
+
+---
+
+## .gitignore
+- **NO modificar** sin preguntar al usuario.

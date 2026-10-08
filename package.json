@@ -1,0 +1,44 @@
+{
+  "name": "toplashes-front",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "format": "prettier --write \"src/**/*.tsx\" \"src/**/*.ts\" \"!src/generated-client/**/*\"",
+    "api": "npx openapi-generator-cli generate -i http://localhost:3003/openapi.json -g typescript-axios -o ./src/generated-client --additional-properties=userAgent=false,withoutUserAgent=true"
+  },
+  "dependencies": {
+    "@mantine/core": "^9.7.1",
+    "@mantine/dates": "^9.7.1",
+    "@mantine/form": "^9.7.1",
+    "@mantine/hooks": "^9.7.1",
+    "@mantine/notifications": "^9.7.1",
+    "axios": "^1.20.0",
+    "dayjs": "^1.11.23",
+    "lucide-react": "^1.52.0",
+    "luxon": "^3.7.2",
+    "next": "16.4.0",
+    "postcss-preset-mantine": "^1.18.0",
+    "postcss-simple-vars": "^7.0.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.41.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/luxon": "^3.7.6",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^10.12.0",
+    "eslint-config-next": "^16.4.0",
+    "prettier": "^3.9.9",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@11.15.1"
+}

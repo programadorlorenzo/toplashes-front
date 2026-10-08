@@ -1,0 +1,55 @@
+---
+description: Convenciones de validación de formularios
+globs: "**/*.tsx,**/*.ts"
+alwaysApply: false
+---
+
+# Validación de Formularios
+
+## Arquitectura de validación
+
+Centralizar todas las validaciones en `src/lib/validations.ts`. Usar funciones puras con firma `(value: string) => string | null` (null = válido, string = mensaje de error). Componer con `chain()`.
+
+No usar Zod, Yup ni schemas pesados. Las funciones puras son más ligeras y componibles.
+
+## Formularios con `@mantine/form` (`useForm`)
+
+Usar `validate` de Mantine. Los errores se muestran inline automáticamente con `getInputProps`.
+
+```typescript
+const form = useForm({
+  mode: "uncontrolled",
+  initialValues: { correo: "", password: "" },
+  validate: {
+    correo: (value) => validarCorreo(value),
+    password: (value) => minLength("Contraseña", 6)(value),
+  },
+});
+
+<TextInput {...form.getInputProps("correo")} />
+```
+
+## Restricciones de UI en inputs
+
+Todo campo con restricciones debe reflejarlas en el UI:
+
+- `required` en campos obligatorios
+- `maxLength` usando constantes centralizadas
+- `inputMode="numeric"` en campos numéricos
+- Filtrado de caracteres en `onChange` cuando aplique
+- `error` para mostrar errores inline en rojo
+
+## Filtrado de dígitos: cuidado con pérdida de foco
+
+En `useForm` modo `uncontrolled`, **nunca** llamar `form.setFieldValue` dentro de `onChange`. Mutar `e.currentTarget.value` y delegar al `onChange` original.
+
+## Errores siempre inline
+
+Los errores de validación deben mostrarse en rojo directamente en el campo, no solo como toast.
+
+## Prohibiciones
+
+- NO mostrar errores solo por toast
+- NO usar Zod, Yup ni schemas pesados
+- NO crear validaciones inline en el componente
+- NO usar `form.setFieldValue` en `onChange` de `useForm` uncontrolled
