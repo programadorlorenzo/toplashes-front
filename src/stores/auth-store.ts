@@ -1,24 +1,17 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { api, API_BASE_URL } from '@/lib/api';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { AuthUserResponseDto } from "@/generated-client";
+import { authApi } from "@/lib/api";
 
-export interface AuthUser {
-  id: number;
-  email: string;
-  name: string;
-  roleId: number;
-  roleName: string;
-  permissions: string[];
-  branchIds: number[];
-}
+export type { AuthUserResponseDto as AuthUser };
 
 interface AuthState {
   token: string | null;
-  user: AuthUser | null;
+  user: AuthUserResponseDto | null;
   isAuthenticated: boolean;
-  setAuth: (token: string, user: AuthUser) => void;
+  setAuth: (token: string, user: AuthUserResponseDto) => void;
   logout: () => void;
-  updateUser: (user: AuthUser) => void;
+  updateUser: (user: AuthUserResponseDto) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -27,26 +20,16 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       isAuthenticated: false,
-      setAuth: (token, user) =>
-        set({ token, user, isAuthenticated: true }),
+      setAuth: (token, user) => set({ token, user, isAuthenticated: true }),
       logout: () => {
         const { token } = get();
         if (token) {
-          api
-            .post(
-              '/auth/logout',
-              {},
-              {
-                baseURL: API_BASE_URL,
-                headers: { Authorization: `Bearer ${token}` },
-              },
-            )
-            .catch(() => {});
+          authApi.authControllerLogout().catch(() => {});
         }
         set({ token: null, user: null, isAuthenticated: false });
       },
       updateUser: (user) => set({ user }),
     }),
-    { name: 'auth-storage' },
+    { name: "auth-storage" },
   ),
 );

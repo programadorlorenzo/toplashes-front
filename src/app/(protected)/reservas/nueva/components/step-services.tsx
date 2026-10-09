@@ -1,17 +1,10 @@
-'use client';
+"use client";
 
-import {
-  Button,
-  Group,
-  MultiSelect,
-  Select,
-  Stack,
-  Text,
-} from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates';
-import { primaryButtonStyles } from '@/lib/crud-styles';
-import { toISODate } from '@/lib/date-utils';
-import type { Service } from '@/types/api';
+import { Button, Group, MultiSelect, Select, Stack, Text } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
+import { primaryButtonStyles } from "@/lib/crud-styles";
+import { toISODate } from "@/lib/date-utils";
+import type { ServiceResponseDto } from "@/generated-client";
 
 interface BranchOption {
   id: number;
@@ -24,7 +17,7 @@ interface StepServicesProps {
   onBranchChange: (id: number) => void;
   date: string;
   onDateChange: (date: string) => void;
-  services: Service[];
+  services: ServiceResponseDto[];
   selectedServiceIds: string[];
   onServiceIdsChange: (ids: string[]) => void;
   onBack: () => void;
@@ -52,9 +45,8 @@ export function StepServices({
     (s) =>
       s.isActive &&
       (!branchId ||
-        s.branchAssignments.some(
-          (a) => a.branchId === branchId && a.isActive,
-        )),
+        s.branchAssignments.length === 0 ||
+        s.branchAssignments.some((a) => a.branchId === branchId && a.isActive)),
   );
 
   const serviceOptions = availableServices.map((s) => ({

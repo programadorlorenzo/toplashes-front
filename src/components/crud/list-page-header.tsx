@@ -1,6 +1,6 @@
-import { Button, Group, Stack, Text, Title } from '@mantine/core';
-import { Plus } from 'lucide-react';
-import { pageTitleStyle, primaryButtonStyles } from '@/lib/crud-styles';
+import { Button, Group, Stack, Text, Title } from "@mantine/core";
+import { Plus } from "lucide-react";
+import { pageTitleStyle, primaryButtonStyles } from "@/lib/crud-styles";
 
 interface ListPageHeaderProps {
   title: string;
@@ -14,7 +14,7 @@ interface ListPageHeaderProps {
 export function ListPageHeader({
   title,
   description,
-  actionLabel = 'Nuevo',
+  actionLabel = "Nuevo",
   onAction,
   actionDisabled,
   extra,

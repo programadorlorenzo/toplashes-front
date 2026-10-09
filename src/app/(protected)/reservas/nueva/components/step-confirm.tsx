@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Button,
   Group,
@@ -9,25 +9,30 @@ import {
   Stack,
   Text,
   Textarea,
-} from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { primaryButtonStyles } from '@/lib/crud-styles';
-import { formatDate, formatTime } from '@/lib/date-utils';
-import { formatSoles } from '@/lib/format';
-import { RESERVATION_CHANNEL_LABELS } from '@/lib/reservation-utils';
-import type { CreateReservationPayload, Customer, ReservationChannel, Service } from '@/types/api';
-import type { SelectedServiceSlot } from './step-availability';
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useRouter } from "next/navigation";
+import type {
+  CreateReservationDto,
+  CreateReservationDtoChannelEnum,
+  CustomerResponseDto,
+  ServiceResponseDto,
+} from "@/generated-client";
+import { reservasApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { primaryButtonStyles } from "@/lib/crud-styles";
+import { formatDate, formatTime } from "@/lib/date-utils";
+import { formatSoles } from "@/lib/format";
+import { RESERVATION_CHANNEL_LABELS } from "@/lib/reservation-utils";
+import type { SelectedServiceSlot } from "./step-availability";
 
 interface StepConfirmProps {
-  customer: Customer;
+  customer: CustomerResponseDto;
   branchName: string;
   branchId: number;
   date: string;
   selections: SelectedServiceSlot[];
-  servicesById: Record<number, Service>;
+  servicesById: Record<number, ServiceResponseDto>;
   onBack: () => void;
 }
 
@@ -45,8 +50,9 @@ export function StepConfirm({
   onBack,
 }: StepConfirmProps) {
   const router = useRouter();
-  const [channel, setChannel] = useState<ReservationChannel>('whatsapp');
-  const [notes, setNotes] = useState('');
+  const [channel, setChannel] =
+    useState<CreateReservationDtoChannelEnum>("whatsapp");
+  const [notes, setNotes] = useState("");
   const [discount, setDiscount] = useState<number | string>(0);
   const [prices, setPrices] = useState<Record<number, number>>(() =>
     Object.fromEntries(selections.map((s) => [s.serviceId, s.agreedPrice])),
@@ -58,13 +64,16 @@ export function StepConfirm({
     0,
   );
   const discountNum =
-    typeof discount === 'number' ? discount : parseFloat(discount || '0');
-  const total = Math.max(subtotal - (Number.isFinite(discountNum) ? discountNum : 0), 0);
+    typeof discount === "number" ? discount : parseFloat(discount || "0");
+  const total = Math.max(
+    subtotal - (Number.isFinite(discountNum) ? discountNum : 0),
+    0,
+  );
 
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const payload: CreateReservationPayload = {
+      const payload: CreateReservationDto = {
         customerId: customer.id,
         branchId,
         date,
@@ -73,23 +82,23 @@ export function StepConfirm({
         discount: discountNum > 0 ? discountNum : undefined,
         services: selections.map((line) => ({
           serviceId: line.serviceId,
-          employeeId: line.employeeId,
+          employeeId: line.employeeId ?? undefined,
           startTime: line.startTime,
           agreedPrice: prices[line.serviceId] ?? line.agreedPrice,
         })),
       };
-      const { data } = await api.post<{ id: number }>('/reservations', payload);
+      const { data } = await reservasApi.reservationControllerCreate(payload);
       notifications.show({
-        title: 'Reserva creada',
-        color: 'green',
-        message: 'La cita se registró correctamente.',
+        title: "Reserva creada",
+        color: "green",
+        message: "La cita se registró correctamente.",
       });
-      router.push(`/reservas/${data.id}`);
+      router.push("/reservas");
     } catch (error) {
       notifications.show({
-        title: 'No se pudo crear la reserva',
+        title: "No se pudo crear la reserva",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setSubmitting(false);
@@ -101,7 +110,7 @@ export function StepConfirm({
       <Text>
         <strong>
           {customer.firstName} {customer.lastName}
-        </strong>{' '}
+        </strong>{" "}
         · {branchName} · {formatDate(date)}
       </Text>
 
@@ -109,13 +118,17 @@ export function StepConfirm({
         {selections.map((line) => {
           const service = servicesById[line.serviceId];
           return (
-            <Group key={line.serviceId} justify="space-between" align="flex-end">
+            <Group
+              key={line.serviceId}
+              justify="space-between"
+              align="flex-end"
+            >
               <Stack gap={0}>
                 <Text size="sm" fw={500}>
                   {service?.name ?? `Servicio #${line.serviceId}`}
                 </Text>
                 <Text size="xs" c="dimmed">
-                  {line.employeeName} · {formatTime(line.startTime)} –{' '}
+                  {line.employeeName} · {formatTime(line.startTime)} –{" "}
                   {formatTime(line.endTime)}
                 </Text>
               </Stack>
@@ -131,7 +144,7 @@ export function StepConfirm({
                   setPrices((prev) => ({
                     ...prev,
                     [line.serviceId]:
-                      typeof value === 'number' ? value : line.agreedPrice,
+                      typeof value === "number" ? value : line.agreedPrice,
                   }))
                 }
               />
@@ -145,7 +158,7 @@ export function StepConfirm({
         data={channelOptions}
         value={channel}
         onChange={(value) =>
-          setChannel((value as ReservationChannel) ?? 'whatsapp')
+          setChannel((value as CreateReservationDtoChannelEnum) ?? "whatsapp")
         }
         comboboxProps={{ withinPortal: true }}
       />

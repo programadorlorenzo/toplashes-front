@@ -37,26 +37,26 @@ export const patron =
     regex.test(v.trim()) ? null : mensaje;
 
 export const correo = chain(
-  requerido('El correo'),
-  patron('El correo', EMAIL_REGEX, 'Ingrese un correo válido'),
+  requerido("El correo"),
+  patron("El correo", EMAIL_REGEX, "Ingrese un correo válido"),
 );
 
 const PHONE_REGEX = /^[+]?[\d\s()-]{7,20}$/;
 
 export const telefono = chain(
-  requerido('El teléfono'),
-  patron('El teléfono', PHONE_REGEX, 'Ingrese un número de teléfono válido'),
+  requerido("El teléfono"),
+  patron("El teléfono", PHONE_REGEX, "Ingrese un número de teléfono válido"),
 );
 
 export function soloDigitos(value: string): string {
-  return value.replace(/\D/g, '');
+  return value.replace(/\D/g, "");
 }
 
 export function filtrarDigitos(inputProps: {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '');
+    e.currentTarget.value = e.currentTarget.value.replace(/\D/g, "");
     inputProps.onChange(e);
   };
 }
@@ -64,21 +64,23 @@ export function filtrarDigitos(inputProps: {
 const TIME_REGEX = /^\d{2}:\d{2}$/;
 
 export const horaHHmm = patron(
-  'Hora',
+  "Hora",
   TIME_REGEX,
-  'Use formato HH:mm (ej. 09:00)',
+  "Use formato HH:mm (ej. 09:00)",
 );
 
 export function correoOpcional(value: string): string | null {
   if (!value.trim()) return null;
-  return patron('Correo', EMAIL_REGEX, 'Ingrese un correo válido')(value);
+  return patron("Correo", EMAIL_REGEX, "Ingrese un correo válido")(value);
 }
 
 export function telefonoOpcional(value: string): string | null {
   if (!value.trim()) return null;
-  return patron('Teléfono', PHONE_REGEX, 'Ingrese un número de teléfono válido')(
-    value,
-  );
+  return patron(
+    "Teléfono",
+    PHONE_REGEX,
+    "Ingrese un número de teléfono válido",
+  )(value);
 }
 
 export function requeridoSi(
@@ -91,6 +93,6 @@ export function requeridoSi(
 export function passwordUsuario(opcional: boolean): V {
   return (value) => {
     if (opcional && !value.trim()) return null;
-    return chain(requerido('Contraseña'), minLength('Contraseña', 6))(value);
+    return chain(requerido("Contraseña"), minLength("Contraseña", 6))(value);
   };
 }

@@ -1,23 +1,33 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Center, Loader, Paper, Stack, Stepper, Text, Title } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { StepCustomer } from './components/step-customer';
-import { StepServices } from './components/step-services';
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  Center,
+  Loader,
+  Paper,
+  Stack,
+  Stepper,
+  Text,
+  Title,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { StepCustomer } from "./components/step-customer";
+import { StepServices } from "./components/step-services";
 import {
   StepAvailability,
   type SelectedServiceSlot,
-} from './components/step-availability';
-import { StepConfirm } from './components/step-confirm';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle, pageTitleStyle } from '@/lib/crud-styles';
-import { todayISO } from '@/lib/date-utils';
-import { useBranchStore } from '@/stores/branch-store';
-import type { Customer, Service } from '@/types/api';
-
+} from "./components/step-availability";
+import { StepConfirm } from "./components/step-confirm";
+import type {
+  CustomerResponseDto,
+  ServiceResponseDto,
+} from "@/generated-client";
+import { serviciosApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { cardPaperStyle, pageTitleStyle } from "@/lib/crud-styles";
+import { todayISO } from "@/lib/date-utils";
+import { useBranchStore } from "@/stores/branch-store";
 export default function NuevaReservaPage() {
   const searchParams = useSearchParams();
   const branches = useBranchStore((s) => s.branches);
@@ -25,24 +35,22 @@ export default function NuevaReservaPage() {
 
   const [active, setActive] = useState(0);
   const [loadingMeta, setLoadingMeta] = useState(true);
-  const [services, setServices] = useState<Service[]>([]);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [services, setServices] = useState<ServiceResponseDto[]>([]);
+  const [customer, setCustomer] = useState<CustomerResponseDto | null>(null);
   const [branchId, setBranchId] = useState<number | null>(
     selectedBranch?.id ?? null,
   );
-  const [date, setDate] = useState(
-    searchParams.get('date') ?? todayISO(),
-  );
+  const [date, setDate] = useState(searchParams.get("date") ?? todayISO());
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [selections, setSelections] = useState<SelectedServiceSlot[]>([]);
 
-  const preselectedEmployeeId = searchParams.get('employeeId')
-    ? parseInt(searchParams.get('employeeId')!, 10)
+  const preselectedEmployeeId = searchParams.get("employeeId")
+    ? parseInt(searchParams.get("employeeId")!, 10)
     : undefined;
-  const preselectedStartTime = searchParams.get('startTime') ?? undefined;
+  const preselectedStartTime = searchParams.get("startTime") ?? undefined;
 
   useEffect(() => {
-    const paramBranch = searchParams.get('branchId');
+    const paramBranch = searchParams.get("branchId");
     if (paramBranch) {
       setBranchId(parseInt(paramBranch, 10));
     }
@@ -52,13 +60,13 @@ export default function NuevaReservaPage() {
     async function loadServices() {
       setLoadingMeta(true);
       try {
-        const { data } = await api.get<Service[]>('/services');
+        const { data } = await serviciosApi.serviceControllerFindAll();
         setServices(data);
       } catch (error) {
         notifications.show({
-          title: 'Error al cargar servicios',
+          title: "Error al cargar servicios",
           message: getApiErrorMessage(error),
-          color: 'red',
+          color: "red",
         });
       } finally {
         setLoadingMeta(false);
@@ -73,7 +81,7 @@ export default function NuevaReservaPage() {
   );
 
   const branchName =
-    branches.find((b) => b.id === branchId)?.name ?? `Local ${branchId ?? ''}`;
+    branches.find((b) => b.id === branchId)?.name ?? `Local ${branchId ?? ""}`;
 
   const serviceIdsNumeric = selectedServiceIds.map((id) => parseInt(id, 10));
 
@@ -97,7 +105,11 @@ export default function NuevaReservaPage() {
       </Stack>
 
       <Paper withBorder radius="md" p="lg" style={cardPaperStyle}>
-        <Stepper active={active} onStepClick={setActive} allowNextStepsSelect={false}>
+        <Stepper
+          active={active}
+          onStepClick={setActive}
+          allowNextStepsSelect={false}
+        >
           <Stepper.Step label="Clienta" description="Buscar o crear">
             <StepCustomer
               selectedCustomerId={customer?.id ?? null}

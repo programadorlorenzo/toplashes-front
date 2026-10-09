@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Button,
@@ -7,12 +7,13 @@ import {
   Stack,
   TextInput,
   Textarea,
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { primaryButtonStyles } from '@/lib/crud-styles';
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
+import type { CustomerResponseDto } from "@/generated-client";
+import { clientesApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { primaryButtonStyles } from "@/lib/crud-styles";
 import {
   chain,
   correoOpcional,
@@ -20,13 +21,11 @@ import {
   requerido,
   telefono,
   telefonoOpcional,
-} from '@/lib/validations';
-import type { Customer } from '@/types/api';
-
+} from "@/lib/validations";
 interface CustomerFormModalProps {
   opened: boolean;
   onClose: () => void;
-  customer: Customer | null;
+  customer: CustomerResponseDto | null;
   onSaved: () => void;
 }
 
@@ -35,24 +34,24 @@ function CustomerForm({
   onClose,
   onSaved,
 }: {
-  customer: Customer | null;
+  customer: CustomerResponseDto | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const isEdit = Boolean(customer);
   const form = useForm({
-    mode: 'uncontrolled',
+    mode: "uncontrolled",
     initialValues: {
-      firstName: customer?.firstName ?? '',
-      lastName: customer?.lastName ?? '',
-      whatsapp: customer?.whatsapp ?? '',
-      phone: customer?.phone ?? '',
-      email: customer?.email ?? '',
-      notes: customer?.notes ?? '',
+      firstName: customer?.firstName ?? "",
+      lastName: customer?.lastName ?? "",
+      whatsapp: customer?.whatsapp ?? "",
+      phone: customer?.phone ?? "",
+      email: customer?.email ?? "",
+      notes: customer?.notes ?? "",
     },
     validate: {
-      firstName: chain(requerido('Nombres'), maxLength('Nombres', 80)),
-      lastName: chain(requerido('Apellidos'), maxLength('Apellidos', 80)),
+      firstName: chain(requerido("Nombres"), maxLength("Nombres", 80)),
+      lastName: chain(requerido("Apellidos"), maxLength("Apellidos", 80)),
       whatsapp: telefono,
       phone: telefonoOpcional,
       email: correoOpcional,
@@ -70,22 +69,22 @@ function CustomerForm({
         notes: values.notes || undefined,
       };
       if (isEdit && customer) {
-        await api.put(`/customers/${customer.id}`, payload);
+        await clientesApi.customerControllerUpdate(customer.id, payload);
       } else {
-        await api.post('/customers', payload);
+        await clientesApi.customerControllerCreate(payload);
       }
       notifications.show({
-        title: isEdit ? 'Cliente actualizado' : 'Cliente creado',
-        color: 'green',
+        title: isEdit ? "Cliente actualizado" : "Cliente creado",
+        color: "green",
         message: `${values.firstName} ${values.lastName}`,
       });
       onSaved();
       onClose();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   });
@@ -94,13 +93,28 @@ function CustomerForm({
     <form onSubmit={handleSubmit}>
       <Stack gap="md">
         <Group grow>
-          <TextInput label="Nombres" required {...form.getInputProps('firstName')} />
-          <TextInput label="Apellidos" required {...form.getInputProps('lastName')} />
+          <TextInput
+            label="Nombres"
+            required
+            {...form.getInputProps("firstName")}
+          />
+          <TextInput
+            label="Apellidos"
+            required
+            {...form.getInputProps("lastName")}
+          />
         </Group>
-        <TextInput label="WhatsApp" required {...form.getInputProps('whatsapp')} />
-        <TextInput label="Teléfono alternativo" {...form.getInputProps('phone')} />
-        <TextInput label="Correo" {...form.getInputProps('email')} />
-        <Textarea label="Notas" minRows={3} {...form.getInputProps('notes')} />
+        <TextInput
+          label="WhatsApp"
+          required
+          {...form.getInputProps("whatsapp")}
+        />
+        <TextInput
+          label="Teléfono alternativo"
+          {...form.getInputProps("phone")}
+        />
+        <TextInput label="Correo" {...form.getInputProps("email")} />
+        <Textarea label="Notas" minRows={3} {...form.getInputProps("notes")} />
         <Group justify="flex-end">
           <Button variant="default" onClick={onClose} type="button">
             Cancelar
@@ -124,12 +138,12 @@ export function CustomerFormModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title={customer ? 'Editar cliente' : 'Nuevo cliente'}
+      title={customer ? "Editar cliente" : "Nuevo cliente"}
       size="lg"
     >
       {opened ? (
         <CustomerForm
-          key={customer?.id ?? 'new'}
+          key={customer?.id ?? "new"}
           customer={customer}
           onClose={onClose}
           onSaved={onSaved}

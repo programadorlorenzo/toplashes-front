@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Box,
   Button,
@@ -12,11 +12,11 @@ import {
   Select,
   Stack,
   Text,
-} from '@mantine/core';
-import { LogOut } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-store';
-import { useBranchStore } from '@/stores/branch-store';
-import { getVisibleMenuItems } from '@/lib/permissions';
+} from "@mantine/core";
+import { LogOut } from "lucide-react";
+import { useAuthStore } from "@/stores/auth-store";
+import { useBranchStore } from "@/stores/branch-store";
+import { getVisibleMenuItems } from "@/lib/permissions";
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -36,7 +36,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
   const handleLogout = () => {
     logout();
-    router.replace('/auth/login');
+    router.replace("/auth/login");
   };
 
   const branchOptions = branches.map((b) => ({
@@ -49,27 +49,29 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       h="100%"
       gap={0}
       style={{
-        backgroundColor: 'hsl(var(--sidebar-bg))',
-        color: 'hsl(var(--sidebar-text))',
+        backgroundColor: "hsl(var(--sidebar-bg))",
+        color: "hsl(var(--sidebar-text))",
       }}
     >
       {/* Brand Logo */}
       <Box py="md" px="md">
         <Box
           style={{
-            width: 120,
+            width: 130,
             height: 56,
-            position: 'relative',
-            margin: '0 auto',
+            position: "relative",
+            margin: "0 auto",
+            filter: "drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25))",
           }}
         >
           <Image
             src="/brand/logo-toplashes.jpg"
             alt="Top Lashes Perú"
             fill
+            sizes="130px"
             style={{
-              objectFit: 'contain',
-              borderRadius: '6px',
+              objectFit: "contain",
+              borderRadius: "6px",
             }}
           />
         </Box>
@@ -90,26 +92,23 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             comboboxProps={{ withinPortal: true }}
             styles={{
               input: {
-                backgroundColor: 'hsl(var(--sidebar-hover))',
-                borderColor: 'hsl(var(--sidebar-muted))',
-                color: 'hsl(var(--sidebar-text))',
-                fontSize: '0.8rem',
+                backgroundColor: "hsl(var(--sidebar-hover))",
+                borderColor: "hsl(var(--sidebar-muted))",
+                color: "hsl(var(--sidebar-text))",
+                fontSize: "0.8rem",
               },
               label: {
-                color: 'hsl(var(--sidebar-muted))',
-                fontSize: '0.7rem',
-                textTransform: 'uppercase' as const,
-                letterSpacing: '0.06em',
+                color: "hsl(var(--sidebar-muted))",
+                fontSize: "0.7rem",
+                textTransform: "uppercase" as const,
+                letterSpacing: "0.06em",
               },
             }}
           />
         </Box>
       )}
 
-      <Divider
-        color="hsl(var(--sidebar-hover))"
-        style={{ opacity: 0.5 }}
-      />
+      <Divider color="hsl(var(--sidebar-hover))" style={{ opacity: 0.5 }} />
 
       {/* Navigation */}
       <ScrollArea flex={1} type="auto" offsetScrollbars>
@@ -117,8 +116,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const active =
-              pathname === item.href ||
-              pathname.startsWith(`${item.href}/`);
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <NavLink
@@ -131,24 +129,15 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                 onClick={onNavigate}
                 styles={{
                   root: {
-                    borderRadius: 'var(--mantine-radius-md)',
+                    borderRadius: "var(--mantine-radius-md)",
                     color: active
-                      ? 'hsl(var(--sidebar-active-text))'
-                      : 'hsl(var(--sidebar-text))',
+                      ? "hsl(var(--sidebar-active-text))"
+                      : "hsl(var(--sidebar-text))",
                     backgroundColor: active
-                      ? 'hsl(var(--sidebar-active))'
-                      : 'transparent',
-                    fontSize: '0.85rem',
+                      ? "hsl(var(--sidebar-active))"
+                      : "transparent",
+                    fontSize: "0.85rem",
                     fontWeight: active ? 500 : 400,
-                    '&[data-active]': {
-                      backgroundColor: 'hsl(var(--sidebar-active))',
-                      color: 'hsl(var(--sidebar-active-text))',
-                    },
-                    '&:hover': {
-                      backgroundColor: active
-                        ? 'hsl(var(--sidebar-active))'
-                        : 'hsl(var(--sidebar-hover))',
-                    },
                   },
                 }}
               />
@@ -157,10 +146,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
         </Stack>
       </ScrollArea>
 
-      <Divider
-        color="hsl(var(--sidebar-hover))"
-        style={{ opacity: 0.5 }}
-      />
+      <Divider color="hsl(var(--sidebar-hover))" style={{ opacity: 0.5 }} />
 
       {/* User info + Logout */}
       <Box p="sm">
@@ -171,14 +157,14 @@ export function Sidebar({ onNavigate }: SidebarProps) {
                 size="xs"
                 fw={500}
                 lineClamp={1}
-                style={{ color: 'hsl(var(--sidebar-text))' }}
+                style={{ color: "hsl(var(--sidebar-text))" }}
               >
                 {user.name}
               </Text>
               <Text
                 size="xs"
                 lineClamp={1}
-                style={{ color: 'hsl(var(--sidebar-muted))' }}
+                style={{ color: "hsl(var(--sidebar-muted))" }}
               >
                 {user.roleName}
               </Text>
@@ -193,11 +179,7 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             justify="flex-start"
             styles={{
               root: {
-                color: 'hsl(var(--sidebar-muted))',
-                '&:hover': {
-                  backgroundColor: 'hsl(var(--sidebar-hover))',
-                  color: 'hsl(var(--sidebar-text))',
-                },
+                color: "hsl(var(--sidebar-muted))",
               },
             }}
           >

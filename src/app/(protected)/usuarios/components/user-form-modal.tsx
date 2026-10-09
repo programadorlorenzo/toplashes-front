@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Button,
@@ -9,27 +9,32 @@ import {
   Select,
   Stack,
   TextInput,
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { primaryButtonStyles } from '@/lib/crud-styles';
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
+import type {
+  BranchResponseDto,
+  RoleResponseDto,
+  UpdateUserDto,
+  UserResponseDto,
+} from "@/generated-client";
+import { usuariosApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { primaryButtonStyles } from "@/lib/crud-styles";
 import {
   chain,
   correo,
   maxLength,
   passwordUsuario,
   requerido,
-} from '@/lib/validations';
-import type { Branch, Role, User } from '@/types/api';
+} from "@/lib/validations";
 
 interface UserFormModalProps {
   opened: boolean;
   onClose: () => void;
-  user: User | null;
-  roles: Role[];
-  branches: Branch[];
+  user: UserResponseDto | null;
+  roles: RoleResponseDto[];
+  branches: BranchResponseDto[];
   onSaved: () => void;
 }
 
@@ -39,23 +44,27 @@ function UserForm({
   branches,
   onClose,
   onSaved,
-}: Omit<UserFormModalProps, 'opened'>) {
+}: Omit<UserFormModalProps, "opened">) {
   const isEdit = Boolean(user);
 
+  const defaultBranchIds = user
+    ? user.branches.map((b) => String(b.branchId))
+    : branches.map((b) => String(b.id));
+
   const form = useForm({
-    mode: 'uncontrolled',
+    mode: "uncontrolled",
     initialValues: {
-      email: user?.email ?? '',
-      password: '',
-      name: user?.name ?? '',
-      roleId: user ? String(user.roleId) : '',
-      branchIds: (user?.branches ?? []).map((b) => String(b.branchId)),
+      email: user?.email ?? "",
+      password: "",
+      name: user?.name ?? "",
+      roleId: user ? String(user.roleId) : "",
+      branchIds: defaultBranchIds,
     },
     validate: {
       email: correo,
       password: passwordUsuario(isEdit),
-      name: chain(requerido('Nombre'), maxLength('Nombre', 120)),
-      roleId: requerido('Rol'),
+      name: chain(requerido("Nombre"), maxLength("Nombre", 120)),
+      roleId: requerido("Rol"),
     },
   });
 
@@ -71,7 +80,7 @@ function UserForm({
     try {
       const branchIds = values.branchIds.map(Number);
       if (isEdit && user) {
-        const payload: Record<string, unknown> = {
+        const payload: UpdateUserDto = {
           email: values.email,
           name: values.name,
           roleId: Number(values.roleId),
@@ -80,9 +89,9 @@ function UserForm({
         if (values.password.trim()) {
           payload.password = values.password;
         }
-        await api.put(`/users/${user.id}`, payload);
+        await usuariosApi.userControllerUpdate(user.id, payload);
       } else {
-        await api.post('/users', {
+        await usuariosApi.userControllerCreate({
           email: values.email,
           password: values.password,
           name: values.name,
@@ -91,17 +100,17 @@ function UserForm({
         });
       }
       notifications.show({
-        title: isEdit ? 'Usuario actualizado' : 'Usuario creado',
-        color: 'green',
+        title: isEdit ? "Usuario actualizado" : "Usuario creado",
+        color: "green",
         message: values.name,
       });
       onSaved();
       onClose();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   });
@@ -109,26 +118,26 @@ function UserForm({
   return (
     <form onSubmit={handleSubmit}>
       <Stack gap="md">
-        <TextInput label="Correo" required {...form.getInputProps('email')} />
+        <TextInput label="Correo" required {...form.getInputProps("email")} />
         <PasswordInput
-          label={isEdit ? 'Contraseña nueva' : 'Contraseña'}
-          description={isEdit ? 'Déjala vacía para no cambiarla' : undefined}
+          label={isEdit ? "Contraseña nueva" : "Contraseña"}
+          description={isEdit ? "Déjala vacía para no cambiarla" : undefined}
           required={!isEdit}
-          {...form.getInputProps('password')}
+          {...form.getInputProps("password")}
         />
-        <TextInput label="Nombre" required {...form.getInputProps('name')} />
+        <TextInput label="Nombre" required {...form.getInputProps("name")} />
         <Select
           label="Rol"
           required
           data={roleOptions}
           searchable
-          {...form.getInputProps('roleId')}
+          {...form.getInputProps("roleId")}
         />
         <MultiSelect
           label="Locales"
           data={branchOptions}
           searchable
-          {...form.getInputProps('branchIds')}
+          {...form.getInputProps("branchIds")}
         />
         <Group justify="flex-end">
           <Button variant="default" onClick={onClose} type="button">
@@ -149,11 +158,16 @@ export function UserFormModal(props: UserFormModalProps) {
     <Modal
       opened={opened}
       onClose={onClose}
-      title={user ? 'Editar usuario' : 'Nuevo usuario'}
+      title={user ? "Editar usuario" : "Nuevo usuario"}
       size="lg"
     >
       {opened ? (
-        <UserForm key={user?.id ?? 'new'} user={user} onClose={onClose} {...rest} />
+        <UserForm
+          key={user?.id ?? "new"}
+          user={user}
+          onClose={onClose}
+          {...rest}
+        />
       ) : null}
     </Modal>
   );

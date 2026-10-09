@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { Group, Select } from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates';
-import { RESERVATION_STATUS_LABELS } from '@/lib/reservation-utils';
-import { toISODate } from '@/lib/date-utils';
-import type { ReservationStatus } from '@/types/api';
+import { Group, Select } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
+import { RESERVATION_STATUS_LABELS } from "@/lib/reservation-utils";
+import { toISODate } from "@/lib/date-utils";
+import type { ReservationResponseDtoStatusEnum } from "@/generated-client";
 
 interface BranchOption {
   id: number;
@@ -14,15 +14,15 @@ interface BranchOption {
 interface ReservationsFiltersProps {
   date: string | null;
   onDateChange: (value: string | null) => void;
-  status: ReservationStatus | null;
-  onStatusChange: (value: ReservationStatus | null) => void;
+  status: ReservationResponseDtoStatusEnum | null;
+  onStatusChange: (value: ReservationResponseDtoStatusEnum | null) => void;
   branchId: number | null;
   onBranchChange: (value: number | null) => void;
   branches: BranchOption[];
 }
 
 const statusOptions = [
-  { value: '', label: 'Todos los estados' },
+  { value: "", label: "Todos los estados" },
   ...Object.entries(RESERVATION_STATUS_LABELS).map(([value, label]) => ({
     value,
     label,
@@ -39,7 +39,7 @@ export function ReservationsFilters({
   branches,
 }: ReservationsFiltersProps) {
   const branchOptions = [
-    { value: '', label: 'Todos los locales' },
+    { value: "", label: "Todos los locales" },
     ...branches.map((b) => ({ value: String(b.id), label: b.name })),
   ];
 
@@ -57,18 +57,20 @@ export function ReservationsFilters({
       <Select
         label="Estado"
         data={statusOptions}
-        value={status ?? ''}
+        value={status ?? ""}
         onChange={(value) =>
-          onStatusChange(value ? (value as ReservationStatus) : null)
+          onStatusChange(
+            value ? (value as ReservationResponseDtoStatusEnum) : null,
+          )
         }
         maw={220}
         comboboxProps={{ withinPortal: true }}
       />
-      {branches.length > 1 ? (
+      {branches.length >= 1 ? (
         <Select
           label="Local"
           data={branchOptions}
-          value={branchId ? String(branchId) : ''}
+          value={branchId ? String(branchId) : ""}
           onChange={(value) =>
             onBranchChange(value ? parseInt(value, 10) : null)
           }

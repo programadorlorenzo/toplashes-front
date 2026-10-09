@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   ActionIcon,
   Center,
@@ -12,40 +12,40 @@ import {
   Table,
   Text,
   Tooltip,
-} from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { Pencil, Power } from 'lucide-react';
-import { ActiveBadge } from '@/components/crud/active-badge';
-import { ListPageHeader } from '@/components/crud/list-page-header';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { formatWorkDays } from '@/lib/constants';
-import { cardPaperStyle } from '@/lib/crud-styles';
-import { hasAnyPermission } from '@/lib/permissions';
-import { useAuthStore } from '@/stores/auth-store';
-import type { Branch } from '@/types/api';
-import { BranchFormModal } from './components/branch-form-modal';
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { Pencil, Power } from "lucide-react";
+import { ActiveBadge } from "@/components/crud/active-badge";
+import { ListPageHeader } from "@/components/crud/list-page-header";
+import type { BranchResponseDto } from "@/generated-client";
+import { sucursalesApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { formatWorkDays } from "@/lib/constants";
+import { cardPaperStyle } from "@/lib/crud-styles";
+import { hasAnyPermission } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/auth-store";
+import { BranchFormModal } from "./components/branch-form-modal";
 
 export default function LocalesPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? []);
-  const canManage = hasAnyPermission(permissions, ['branches.manage']);
+  const canManage = hasAnyPermission(permissions, ["branches.manage"]);
 
-  const [items, setItems] = useState<Branch[]>([]);
+  const [items, setItems] = useState<BranchResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Branch | null>(null);
+  const [editing, setEditing] = useState<BranchResponseDto | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get<Branch[]>('/branches');
+      const { data } = await sucursalesApi.branchControllerFindAll();
       setItems(data);
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar',
-        message: getApiErrorMessage(error, 'No se pudieron cargar los locales'),
-        color: 'red',
+        title: "Error al cargar",
+        message: getApiErrorMessage(error, "No se pudieron cargar los locales"),
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -61,27 +61,27 @@ export default function LocalesPage() {
     open();
   };
 
-  const openEdit = (branch: Branch) => {
+  const openEdit = (branch: BranchResponseDto) => {
     setEditing(branch);
     open();
   };
 
-  const toggleActive = async (branch: Branch) => {
+  const toggleActive = async (branch: BranchResponseDto) => {
     try {
-      await api.put(`/branches/${branch.id}`, {
+      await sucursalesApi.branchControllerUpdate(branch.id, {
         isActive: !branch.isActive,
       });
       notifications.show({
-        title: branch.isActive ? 'Local desactivado' : 'Local activado',
+        title: branch.isActive ? "Local desactivado" : "Local activado",
         message: branch.name,
-        color: 'green',
+        color: "green",
       });
       void load();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   };
@@ -123,7 +123,7 @@ export default function LocalesPage() {
                   <Table.Tr key={branch.id}>
                     <Table.Td fw={500}>{branch.name}</Table.Td>
                     <Table.Td>{branch.address}</Table.Td>
-                    <Table.Td>{branch.phone ?? '—'}</Table.Td>
+                    <Table.Td>{branch.phone ?? "—"}</Table.Td>
                     <Table.Td>
                       {branch.openTime} – {branch.closeTime}
                     </Table.Td>
@@ -145,11 +145,11 @@ export default function LocalesPage() {
                             </ActionIcon>
                           </Tooltip>
                           <Tooltip
-                            label={branch.isActive ? 'Desactivar' : 'Activar'}
+                            label={branch.isActive ? "Desactivar" : "Activar"}
                           >
                             <ActionIcon
                               variant="subtle"
-                              color={branch.isActive ? 'orange' : 'green'}
+                              color={branch.isActive ? "orange" : "green"}
                               onClick={() => void toggleActive(branch)}
                               aria-label="Cambiar estado"
                             >

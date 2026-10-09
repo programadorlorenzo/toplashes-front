@@ -24,10 +24,10 @@
   --tl-sand: 28 14% 78%;
   --tl-gold: 32 28% 55%;
   --tl-gold-soft: 32 22% 65%;
-  --tl-brown-dark: 22 18% 22%;
-  --tl-brown: 24 14% 34%;
-  --tl-brown-medium: 25 12% 45%;
-  --tl-charcoal: 20 8% 28%;
+  --tl-brown-dark: 22 20% 16%;
+  --tl-brown: 24 16% 28%;
+  --tl-brown-medium: 25 14% 36%;
+  --tl-charcoal: 20 12% 15%;
   --tl-warm-white: 38 40% 97%;
   --tl-rose-muted: 8 15% 72%;
 
@@ -41,7 +41,7 @@
   --secondary: var(--tl-beige);
   --secondary-foreground: var(--tl-brown-dark);
   --muted: var(--tl-cream);
-  --muted-foreground: var(--tl-brown-medium);
+  --muted-foreground: var(--tl-brown);
   --accent: var(--tl-gold);
   --accent-foreground: 36 35% 97%;
   --border: 30 14% 84%;
@@ -58,11 +58,11 @@
 
   /* === Sidebar — inspirado en el fondo del logo === */
   --sidebar-bg: var(--tl-taupe);
-  --sidebar-text: var(--tl-ivory);
+  --sidebar-text: 36 30% 96%;
   --sidebar-active: var(--tl-taupe-dark);
-  --sidebar-active-text: var(--tl-cream);
+  --sidebar-active-text: 0 0% 100%;
   --sidebar-hover: 26 10% 55%;
-  --sidebar-muted: 28 10% 68%;
+  --sidebar-muted: 34 20% 82%;
 }
 
 [data-mantine-color-scheme="dark"] {

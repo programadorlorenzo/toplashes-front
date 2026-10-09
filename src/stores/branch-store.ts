@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface BranchOption {
   id: number;
@@ -21,6 +21,6 @@ export const useBranchStore = create<BranchState>()(
       setBranches: (branches) => set({ branches }),
       selectBranch: (branch) => set({ selectedBranch: branch }),
     }),
-    { name: 'branch-storage' },
+    { name: "branch-storage" },
   ),
 );

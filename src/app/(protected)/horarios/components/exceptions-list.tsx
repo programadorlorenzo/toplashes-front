@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   ActionIcon,
@@ -7,16 +7,16 @@ import {
   Table,
   Text,
   Tooltip,
-} from '@mantine/core';
-import { Pencil, Trash2 } from 'lucide-react';
-import { formatDate } from '@/lib/date-utils';
-import { SCHEDULE_EXCEPTION_LABELS } from '@/lib/reservation-utils';
-import type { ScheduleException } from '@/types/api';
+} from "@mantine/core";
+import { Pencil, Trash2 } from "lucide-react";
+import { formatDate } from "@/lib/date-utils";
+import { SCHEDULE_EXCEPTION_LABELS } from "@/lib/reservation-utils";
+import type { ScheduleExceptionResponseDto } from "@/generated-client";
 
 interface ExceptionsListProps {
-  items: ScheduleException[];
+  items: ScheduleExceptionResponseDto[];
   canManage: boolean;
-  onEdit: (item: ScheduleException) => void;
+  onEdit: (item: ScheduleExceptionResponseDto) => void;
   onDelete: (id: number) => void;
   deletingId: number | null;
 }
@@ -58,9 +58,9 @@ export function ExceptionsList({
               <Table.Td>
                 {item.startTime && item.endTime
                   ? `${item.startTime} – ${item.endTime}`
-                  : item.startTime ?? '—'}
+                  : (item.startTime ?? "—")}
               </Table.Td>
-              <Table.Td>{item.reason ?? '—'}</Table.Td>
+              <Table.Td>{item.reason ?? "—"}</Table.Td>
               {canManage ? (
                 <Table.Td>
                   <Group gap={4} wrap="nowrap">

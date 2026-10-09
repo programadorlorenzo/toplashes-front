@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionIcon,
   Badge,
@@ -13,29 +13,33 @@ import {
   Table,
   Text,
   Tooltip,
-} from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { Pencil, Power } from 'lucide-react';
-import { ActiveBadge } from '@/components/crud/active-badge';
-import { ListPageHeader } from '@/components/crud/list-page-header';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle } from '@/lib/crud-styles';
-import { hasAnyPermission } from '@/lib/permissions';
-import { useAuthStore } from '@/stores/auth-store';
-import type { Branch, Employee, Service } from '@/types/api';
-import { EmployeeFormModal } from './components/employee-form-modal';
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { Pencil, Power } from "lucide-react";
+import { ActiveBadge } from "@/components/crud/active-badge";
+import { ListPageHeader } from "@/components/crud/list-page-header";
+import type {
+  BranchResponseDto,
+  EmployeeResponseDto,
+  ServiceResponseDto,
+} from "@/generated-client";
+import { colaboradorasApi, serviciosApi, sucursalesApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { cardPaperStyle } from "@/lib/crud-styles";
+import { hasAnyPermission } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/auth-store";
+import { EmployeeFormModal } from "./components/employee-form-modal";
 
 export default function ColaboradorasPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? []);
-  const canManage = hasAnyPermission(permissions, ['employees.manage']);
+  const canManage = hasAnyPermission(permissions, ["employees.manage"]);
 
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const [employees, setEmployees] = useState<EmployeeResponseDto[]>([]);
+  const [branches, setBranches] = useState<BranchResponseDto[]>([]);
+  const [services, setServices] = useState<ServiceResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Employee | null>(null);
+  const [editing, setEditing] = useState<EmployeeResponseDto | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
 
   const branchMap = useMemo(
@@ -51,18 +55,18 @@ export default function ColaboradorasPage() {
     setLoading(true);
     try {
       const [empRes, branchRes, serviceRes] = await Promise.all([
-        api.get<Employee[]>('/employees'),
-        api.get<Branch[]>('/branches'),
-        api.get<Service[]>('/services'),
+        colaboradorasApi.employeeControllerFindAll(),
+        sucursalesApi.branchControllerFindAll(),
+        serviciosApi.serviceControllerFindAll(),
       ]);
       setEmployees(empRes.data);
       setBranches(branchRes.data);
       setServices(serviceRes.data);
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar',
+        title: "Error al cargar",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -73,17 +77,17 @@ export default function ColaboradorasPage() {
     void load();
   }, [load]);
 
-  const toggleActive = async (employee: Employee) => {
+  const toggleActive = async (employee: EmployeeResponseDto) => {
     try {
-      await api.put(`/employees/${employee.id}`, {
+      await colaboradorasApi.employeeControllerUpdate(employee.id, {
         isActive: !employee.isActive,
       });
       void load();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   };
@@ -132,7 +136,7 @@ export default function ColaboradorasPage() {
                     <Table.Td fw={500}>
                       {emp.firstName} {emp.lastName}
                     </Table.Td>
-                    <Table.Td>{emp.phone ?? '—'}</Table.Td>
+                    <Table.Td>{emp.phone ?? "—"}</Table.Td>
                     <Table.Td>
                       <Group gap={6}>
                         {emp.branchIds.length === 0 ? (
@@ -141,7 +145,12 @@ export default function ColaboradorasPage() {
                           </Text>
                         ) : (
                           emp.branchIds.map((id) => (
-                            <Badge key={id} variant="light" color="gray" size="sm">
+                            <Badge
+                              key={id}
+                              variant="light"
+                              color="gray"
+                              size="sm"
+                            >
                               {branchMap.get(id) ?? `Local ${id}`}
                             </Badge>
                           ))
@@ -186,10 +195,12 @@ export default function ColaboradorasPage() {
                               <Pencil size={16} />
                             </ActionIcon>
                           </Tooltip>
-                          <Tooltip label={emp.isActive ? 'Desactivar' : 'Activar'}>
+                          <Tooltip
+                            label={emp.isActive ? "Desactivar" : "Activar"}
+                          >
                             <ActionIcon
                               variant="subtle"
-                              color={emp.isActive ? 'orange' : 'green'}
+                              color={emp.isActive ? "orange" : "green"}
                               onClick={() => void toggleActive(emp)}
                               aria-label="Estado"
                             >

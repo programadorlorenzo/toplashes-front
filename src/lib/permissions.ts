@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Building2,
@@ -6,14 +6,13 @@ import {
   ClipboardList,
   Clock,
   CreditCard,
-  Stethoscope,
   LayoutDashboard,
   Scissors,
   Shield,
   UserCog,
   Users,
   UsersRound,
-} from 'lucide-react';
+} from "lucide-react";
 
 export function hasPermission(
   userPermissions: string[],
@@ -26,9 +25,7 @@ export function hasAnyPermission(
   userPermissions: string[],
   required: string[],
 ): boolean {
-  return required.some((permission) =>
-    userPermissions.includes(permission),
-  );
+  return required.some((permission) => userPermissions.includes(permission));
 }
 
 export interface MenuItemConfig {
@@ -41,82 +38,76 @@ export interface MenuItemConfig {
 /** Menú principal: visible si el usuario tiene al menos uno de los permisos listados. */
 export const MENU_ITEMS: MenuItemConfig[] = [
   {
-    label: 'Dashboard',
-    href: '/dashboard',
+    label: "Dashboard",
+    href: "/dashboard",
     icon: LayoutDashboard,
-    permissions: ['dashboard.read'],
+    permissions: ["dashboard.read"],
   },
   {
-    label: 'Calendario',
-    href: '/calendario',
+    label: "Calendario",
+    href: "/calendario",
     icon: CalendarDays,
-    permissions: ['schedules.read', 'appointments.read'],
+    permissions: ["schedules.read", "reservations.read"],
   },
   {
-    label: 'Horarios',
-    href: '/horarios',
+    label: "Horarios",
+    href: "/horarios",
     icon: Clock,
-    permissions: ['schedules.read', 'schedules.manage'],
+    permissions: ["schedules.read", "schedules.manage"],
   },
   {
-    label: 'Reservas',
-    href: '/reservas',
+    label: "Reservas",
+    href: "/reservas",
     icon: ClipboardList,
-    permissions: ['reservations.read'],
+    permissions: ["reservations.read"],
   },
   {
-    label: 'Atenciones',
-    href: '/atenciones',
-    icon: Stethoscope,
-    permissions: ['appointments.read'],
-  },
-  {
-    label: 'Clientes',
-    href: '/clientes',
+    label: "Clientes",
+    href: "/clientes",
     icon: Users,
-    permissions: ['customers.read', 'customers.manage'],
+    permissions: ["customers.read", "customers.manage"],
   },
   {
-    label: 'Colaboradoras',
-    href: '/colaboradoras',
+    label: "Colaboradoras",
+    href: "/colaboradoras",
     icon: UsersRound,
-    permissions: ['employees.read', 'employees.manage'],
+    permissions: ["employees.read", "employees.manage"],
   },
   {
-    label: 'Servicios',
-    href: '/servicios',
+    label: "Servicios",
+    href: "/servicios",
     icon: Scissors,
-    permissions: ['services.read', 'services.manage'],
+    permissions: ["services.read", "services.manage"],
   },
   {
-    label: 'Locales',
-    href: '/locales',
+    label: "Locales",
+    href: "/locales",
     icon: Building2,
-    permissions: ['branches.read', 'branches.manage'],
+    permissions: ["branches.read", "branches.manage"],
   },
   {
-    label: 'Pagos',
-    href: '/pagos',
+    label: "Pagos",
+    href: "/pagos",
     icon: CreditCard,
-    permissions: ['payments.read', 'payments.create'],
+    permissions: ["payments.read", "payments.create"],
   },
   {
-    label: 'Reportes',
-    href: '/reportes',
+    label: "Reportes",
+    href: "/reportes",
     icon: BarChart3,
-    permissions: ['reports.read'],
+    permissions: ["reports.read"],
   },
   {
-    label: 'Usuarios',
-    href: '/usuarios',
+    label: "Usuarios",
+    href: "/usuarios",
     icon: UserCog,
-    permissions: ['users.manage'],
+    permissions: ["users.manage"],
   },
   {
-    label: 'Roles',
-    href: '/roles',
+    label: "Roles",
+    href: "/roles",
     icon: Shield,
-    permissions: ['roles.manage'],
+    permissions: ["roles.manage"],
   },
 ];
 

@@ -1,159 +1,160 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Center, Loader, Paper, Stack, Text } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { ListPageHeader } from '@/components/crud/list-page-header';
-import { ReservationsFilters } from './components/reservations-filters';
-import { ReservationsTable } from './components/reservations-table';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle } from '@/lib/crud-styles';
-import { todayISO } from '@/lib/date-utils';
-import { hasAnyPermission } from '@/lib/permissions';
-import { useAuthStore } from '@/stores/auth-store';
-import { useBranchStore } from '@/stores/branch-store';
-import type { Customer, Reservation, ReservationStatus } from '@/types/api';
+import { useEffect, useState } from "react";
+import {
+  Center,
+  Grid,
+  Loader,
+  Select,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
+import { CustomerReservationsModal } from "@/components/customer-reservations-modal";
+import { ReservationDetailModal } from "@/components/reservation-detail-modal";
+import { pageTitleStyle } from "@/lib/crud-styles";
+import { todayISO, toISODate } from "@/lib/date-utils";
+import { useBranchStore } from "@/stores/branch-store";
+import { QuickReserveModal } from "./components/quick-reserve-modal";
+import { ReservationQueue } from "./components/reservation-queue";
+import { ScheduleCard } from "./components/schedule-card";
+import { useReservasDashboard } from "./components/use-reservas-dashboard";
 
-async function fetchCustomerNames(ids: number[]): Promise<Record<number, string>> {
-  const unique = [...new Set(ids)];
-  const pairs = await Promise.all(
-    unique.map(async (id) => {
-      try {
-        const { data } = await api.get<Customer>(`/customers/${id}`);
-        return [id, `${data.firstName} ${data.lastName}`] as const;
-      } catch {
-        return [id, `Cliente #${id}`] as const;
-      }
-    }),
-  );
-  return Object.fromEntries(pairs);
+interface QuickReserveTarget {
+  employeeId: number | null;
+  employeeName: string;
 }
 
 export default function ReservasPage() {
-  const router = useRouter();
-  const permissions = useAuthStore((s) => s.user?.permissions ?? []);
-  const canCreate = hasAnyPermission(permissions, ['reservations.create']);
-  const canUpdate = hasAnyPermission(permissions, ['reservations.update']);
-
   const branches = useBranchStore((s) => s.branches);
   const selectedBranch = useBranchStore((s) => s.selectedBranch);
 
-  const [items, setItems] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
-  const [customerNames, setCustomerNames] = useState<Record<number, string>>({});
-  const [date, setDate] = useState<string | null>(todayISO());
-  const [status, setStatus] = useState<ReservationStatus | null>(null);
-  const [branchFilter, setBranchFilter] = useState<number | null>(
+  const [branchId, setBranchId] = useState<number | null>(
     selectedBranch?.id ?? null,
   );
-
-  const branchNames = useMemo(
-    () => Object.fromEntries(branches.map((b) => [b.id, b.name])),
-    [branches],
+  const [date, setDate] = useState(todayISO());
+  const [detailId, setDetailId] = useState<number | null>(null);
+  const [historyCust, setHistoryCust] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [quickTarget, setQuickTarget] = useState<QuickReserveTarget | null>(
+    null,
   );
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get<Reservation[]>('/reservations', {
-        params: {
-          ...(branchFilter ? { branchId: branchFilter } : {}),
-          ...(date ? { date } : {}),
-          ...(status ? { status } : {}),
-        },
-      });
-      setItems(data);
-      setCustomerNames(await fetchCustomerNames(data.map((r) => r.customerId)));
-    } catch (error) {
-      notifications.show({
-        title: 'Error al cargar reservas',
-        message: getApiErrorMessage(error),
-        color: 'red',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [branchFilter, date, status]);
-
   useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    if (selectedBranch && branchFilter === null) {
-      setBranchFilter(selectedBranch.id);
+    if (selectedBranch && branchId === null) {
+      setBranchId(selectedBranch.id);
     }
-  }, [selectedBranch, branchFilter]);
+  }, [selectedBranch, branchId]);
 
-  const handleQuickStatus = async (id: number, next: ReservationStatus) => {
-    setUpdatingId(id);
-    try {
-      if (next === 'cancelled') {
-        await api.post(`/reservations/${id}/cancel`, {});
-      } else {
-        await api.put(`/reservations/${id}/status`, { status: next });
-      }
-      notifications.show({
-        title: 'Estado actualizado',
-        color: 'green',
-        message: 'La reserva se actualizó correctamente.',
-      });
-      await load();
-    } catch (error) {
-      notifications.show({
-        title: 'No se pudo actualizar',
-        message: getApiErrorMessage(error),
-        color: 'red',
-      });
-    } finally {
-      setUpdatingId(null);
-    }
-  };
+  const dashboard = useReservasDashboard(branchId, date);
+
+  const branchOptions = branches.map((b) => ({
+    value: String(b.id),
+    label: b.name,
+  }));
 
   return (
     <Stack gap="lg">
-      <ListPageHeader
-        title="Reservas"
-        description="Consulta y gestiona citas por fecha, local y estado."
-        actionLabel="Nueva reserva"
-        onAction={
-          canCreate ? () => router.push('/reservas/nueva') : undefined
-        }
-      />
+      <Stack gap={4}>
+        <Title order={2} style={pageTitleStyle}>
+          Reservas del día
+        </Title>
+        <Text c="dimmed">
+          Vista por colaboradoras. Haz clic en una cita para ver detalles.
+        </Text>
+      </Stack>
 
-      <ReservationsFilters
-        date={date}
-        onDateChange={setDate}
-        status={status}
-        onStatusChange={setStatus}
-        branchId={branchFilter}
-        onBranchChange={setBranchFilter}
-        branches={branches}
-      />
-
-      <Paper withBorder radius="md" p="md" style={cardPaperStyle}>
-        {loading ? (
-          <Center py="xl">
-            <Loader color="gray" type="dots" />
-          </Center>
-        ) : items.length === 0 ? (
-          <Text c="dimmed" ta="center" py="xl">
-            No hay reservas con los filtros seleccionados.
-          </Text>
-        ) : (
-          <ReservationsTable
-            items={items}
-            customerNames={customerNames}
-            branchNames={branchNames}
-            canUpdate={canUpdate}
-            onQuickStatus={handleQuickStatus}
-            updatingId={updatingId}
+      <Grid align="flex-end">
+        <Grid.Col span={{ base: 12, sm: 4 }}>
+          <Select
+            label="Local"
+            data={branchOptions}
+            value={branchId ? String(branchId) : null}
+            onChange={(v) => v && setBranchId(parseInt(v, 10))}
           />
-        )}
-      </Paper>
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, sm: 4 }}>
+          <DatePickerInput
+            label="Fecha"
+            value={date}
+            onChange={(v) => v && setDate(toISODate(v))}
+            valueFormat="DD/MM/YYYY"
+          />
+        </Grid.Col>
+      </Grid>
+
+      {dashboard.loading ? (
+        <Center py="xl">
+          <Loader color="gray" type="dots" />
+        </Center>
+      ) : dashboard.branchEmployees.length === 0 ? (
+        <Text c="dimmed" ta="center" py="xl">
+          Selecciona un local para ver las colaboradoras.
+        </Text>
+      ) : (
+        <>
+          <Grid>
+            {dashboard.branchEmployees.map((emp) => (
+              <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={emp.id}>
+                <ScheduleCard
+                  employeeName={`${emp.firstName} ${emp.lastName}`}
+                  bookings={dashboard.bookingsByEmployee[emp.id] ?? []}
+                  onBookingClick={setDetailId}
+                  onNewReservation={() =>
+                    setQuickTarget({
+                      employeeId: emp.id,
+                      employeeName: `${emp.firstName} ${emp.lastName}`,
+                    })
+                  }
+                />
+              </Grid.Col>
+            ))}
+          </Grid>
+
+          <ReservationQueue
+            items={dashboard.queue}
+            onViewReservation={setDetailId}
+            onNewReservation={() =>
+              setQuickTarget({ employeeId: null, employeeName: "Cola" })
+            }
+          />
+        </>
+      )}
+
+      <ReservationDetailModal
+        opened={detailId !== null}
+        onClose={() => setDetailId(null)}
+        reservationId={detailId}
+        onUpdated={() => void dashboard.reload()}
+      />
+
+      <CustomerReservationsModal
+        opened={historyCust !== null}
+        onClose={() => setHistoryCust(null)}
+        customerId={historyCust?.id ?? null}
+        customerName={historyCust?.name ?? ""}
+        onSelectReservation={(id) => {
+          setHistoryCust(null);
+          setDetailId(id);
+        }}
+      />
+
+      {branchId && (
+        <QuickReserveModal
+          opened={quickTarget !== null}
+          onClose={() => setQuickTarget(null)}
+          onCreated={() => void dashboard.reload()}
+          branchId={branchId}
+          date={date}
+          employeeId={quickTarget?.employeeId ?? null}
+          employeeName={quickTarget?.employeeName ?? ""}
+          services={dashboard.services}
+          servicesById={dashboard.servicesById}
+        />
+      )}
     </Stack>
   );
 }

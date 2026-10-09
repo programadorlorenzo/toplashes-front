@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { Box, Text, Tooltip } from '@mantine/core';
-import { formatTime } from '@/lib/date-utils';
+import { Box, Text, Tooltip } from "@mantine/core";
+import { formatTime } from "@/lib/date-utils";
 import {
   RESERVATION_STATUS_COLORS,
   RESERVATION_STATUS_LABELS,
-} from '@/lib/reservation-utils';
-import type { ReservationStatus } from '@/types/api';
+} from "@/lib/reservation-utils";
+import type { ReservationResponseDtoStatusEnum } from "@/generated-client";
 
 export interface ReservationBlockData {
   reservationId: number;
   reservationServiceId: number;
-  employeeId: number;
+  employeeId: number | null;
   customerName: string;
   serviceLabel: string;
-  status: ReservationStatus;
+  status: ReservationResponseDtoStatusEnum;
   startTime: string;
   endTime: string;
   topPx: number;
@@ -42,21 +42,21 @@ export function ReservationBlock({
       type="button"
       onClick={onClick}
       style={{
-        position: 'absolute',
+        position: "absolute",
         left: 4,
         right: 4,
         top: block.topPx,
         height: block.heightPx,
         zIndex: 2,
-        border: 'none',
-        borderRadius: 'var(--mantine-radius-sm)',
-        padding: compact ? '2px 6px' : '4px 8px',
-        textAlign: 'left',
-        cursor: 'pointer',
-        overflow: 'hidden',
+        border: "none",
+        borderRadius: "var(--mantine-radius-sm)",
+        padding: compact ? "2px 6px" : "4px 8px",
+        textAlign: "left",
+        cursor: "pointer",
+        overflow: "hidden",
         backgroundColor: `var(--mantine-color-${color}-1)`,
         borderLeft: `3px solid var(--mantine-color-${color}-6)`,
-        boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+        boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
       }}
     >
       <Text size="xs" fw={600} lineClamp={1}>

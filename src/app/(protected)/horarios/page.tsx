@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Button,
   Center,
@@ -11,41 +11,53 @@ import {
   Stack,
   Text,
   Title,
-} from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { Plus } from 'lucide-react';
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { Plus } from "lucide-react";
 import {
   buildDefaultDrafts,
   ScheduleGrid,
   ScheduleGridLegend,
   type DayScheduleDraft,
-} from './components/schedule-grid';
-import { ExceptionFormModal } from './components/exception-form-modal';
-import { ExceptionsList } from './components/exceptions-list';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle, pageTitleStyle, primaryButtonStyles } from '@/lib/crud-styles';
-import { hasAnyPermission } from '@/lib/permissions';
-import { useAuthStore } from '@/stores/auth-store';
-import { useBranchStore } from '@/stores/branch-store';
-import type { Branch, Employee, ScheduleEntry, ScheduleException } from '@/types/api';
-
+} from "./components/schedule-grid";
+import { ExceptionFormModal } from "./components/exception-form-modal";
+import { ExceptionsList } from "./components/exceptions-list";
+import type {
+  BranchResponseDto,
+  EmployeeResponseDto,
+  ScheduleExceptionResponseDto,
+  ScheduleResponseDto,
+} from "@/generated-client";
+import { colaboradorasApi, horariosApi, sucursalesApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import {
+  cardPaperStyle,
+  pageTitleStyle,
+  primaryButtonStyles,
+} from "@/lib/crud-styles";
+import { hasAnyPermission } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/auth-store";
+import { useBranchStore } from "@/stores/branch-store";
 export default function HorariosPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? []);
-  const canManage = hasAnyPermission(permissions, ['schedules.manage']);
+  const canManage = hasAnyPermission(permissions, ["schedules.manage"]);
 
   const branches = useBranchStore((s) => s.branches);
   const selectedBranch = useBranchStore((s) => s.selectedBranch);
 
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [branchDetail, setBranchDetail] = useState<Branch | null>(null);
+  const [employees, setEmployees] = useState<EmployeeResponseDto[]>([]);
+  const [branchDetail, setBranchDetail] = useState<BranchResponseDto | null>(
+    null,
+  );
   const [employeeId, setEmployeeId] = useState<number | null>(null);
   const [branchId, setBranchId] = useState<number | null>(
     selectedBranch?.id ?? null,
   );
-  const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
-  const [exceptions, setExceptions] = useState<ScheduleException[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleResponseDto[]>([]);
+  const [exceptions, setExceptions] = useState<ScheduleExceptionResponseDto[]>(
+    [],
+  );
   const [drafts, setDrafts] = useState<DayScheduleDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingDay, setSavingDay] = useState<number | null>(null);
@@ -53,7 +65,7 @@ export default function HorariosPage() {
     null,
   );
   const [editingException, setEditingException] =
-    useState<ScheduleException | null>(null);
+    useState<ScheduleExceptionResponseDto | null>(null);
   const [exceptionOpened, exceptionHandlers] = useDisclosure(false);
 
   const branchEmployees = useMemo(() => {
@@ -75,13 +87,13 @@ export default function HorariosPage() {
 
   const loadMeta = useCallback(async () => {
     try {
-      const { data } = await api.get<Employee[]>('/employees');
+      const { data } = await colaboradorasApi.employeeControllerFindAll();
       setEmployees(data.filter((e) => e.isActive));
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar colaboradoras',
+        title: "Error al cargar colaboradoras",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   }, []);
@@ -98,13 +110,9 @@ export default function HorariosPage() {
     setLoading(true);
     try {
       const [schedulesRes, exceptionsRes, branchRes] = await Promise.all([
-        api.get<ScheduleEntry[]>('/schedules', {
-          params: { employeeId, branchId },
-        }),
-        api.get<ScheduleException[]>('/schedules/exceptions', {
-          params: { employeeId },
-        }),
-        api.get<Branch>(`/branches/${branchId}`),
+        horariosApi.scheduleControllerFindAllSchedules(employeeId, branchId),
+        horariosApi.scheduleControllerFindAllExceptions(employeeId),
+        sucursalesApi.branchControllerFindOne(branchId),
       ]);
       setSchedules(schedulesRes.data);
       setExceptions(exceptionsRes.data);
@@ -118,9 +126,9 @@ export default function HorariosPage() {
       );
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar horarios',
+        title: "Error al cargar horarios",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -143,7 +151,7 @@ export default function HorariosPage() {
 
   const handleDraftChange = (
     dayOfWeek: number,
-    field: 'startTime' | 'endTime',
+    field: "startTime" | "endTime",
     value: string,
   ) => {
     setDrafts((prev) =>
@@ -161,12 +169,12 @@ export default function HorariosPage() {
     setSavingDay(dayOfWeek);
     try {
       if (draft.scheduleId) {
-        await api.put(`/schedules/${draft.scheduleId}`, {
+        await horariosApi.scheduleControllerUpdateSchedule(draft.scheduleId, {
           startTime: draft.startTime,
           endTime: draft.endTime,
         });
       } else {
-        await api.post('/schedules', {
+        await horariosApi.scheduleControllerCreateSchedule({
           employeeId,
           branchId,
           dayOfWeek,
@@ -175,16 +183,16 @@ export default function HorariosPage() {
         });
       }
       notifications.show({
-        title: 'Horario guardado',
-        color: 'green',
-        message: 'El día se actualizó correctamente.',
+        title: "Horario guardado",
+        color: "green",
+        message: "El día se actualizó correctamente.",
       });
       await loadSchedules();
     } catch (error) {
       notifications.show({
-        title: 'No se pudo guardar',
+        title: "No se pudo guardar",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setSavingDay(null);
@@ -194,18 +202,18 @@ export default function HorariosPage() {
   const handleDeleteException = async (id: number) => {
     setDeletingExceptionId(id);
     try {
-      await api.delete(`/schedules/exceptions/${id}`);
+      await horariosApi.scheduleControllerRemoveException(id);
       notifications.show({
-        title: 'Excepción eliminada',
-        color: 'green',
-        message: 'Se eliminó el registro.',
+        title: "Excepción eliminada",
+        color: "green",
+        message: "Se eliminó el registro.",
       });
       await loadSchedules();
     } catch (error) {
       notifications.show({
-        title: 'Error al eliminar',
+        title: "Error al eliminar",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setDeletingExceptionId(null);
@@ -226,7 +234,7 @@ export default function HorariosPage() {
       </Stack>
 
       <Group wrap="wrap">
-        {branches.length > 1 ? (
+        {branches.length >= 1 ? (
           <Select
             label="Local"
             data={branchOptions}
@@ -265,8 +273,8 @@ export default function HorariosPage() {
             <Text fw={600}>
               {selectedEmployee
                 ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}`
-                : 'Colaboradora'}
-              {branchDetail ? ` · ${branchDetail.name}` : ''}
+                : "Colaboradora"}
+              {branchDetail ? ` · ${branchDetail.name}` : ""}
             </Text>
             <ScheduleGridLegend />
             <ScheduleGrid

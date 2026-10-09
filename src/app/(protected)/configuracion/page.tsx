@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Paper, Stack, Text, Title } from '@mantine/core';
-import { Settings } from 'lucide-react';
+import { Paper, Stack, Text, Title } from "@mantine/core";
+import { Settings } from "lucide-react";
 
 export default function ConfiguracionPage() {
   return (
@@ -10,16 +10,14 @@ export default function ConfiguracionPage() {
         <Title
           order={2}
           style={{
-            fontFamily: 'var(--font-heading), Georgia, serif',
-            color: 'hsl(var(--tl-brown-dark))',
+            fontFamily: "var(--font-heading), Georgia, serif",
+            color: "hsl(var(--tl-brown-dark))",
             fontWeight: 500,
           }}
         >
           Configuración
         </Title>
-        <Text c="dimmed">
-          Preferencias del sistema y datos generales.
-        </Text>
+        <Text c="dimmed">Preferencias del sistema y datos generales.</Text>
       </Stack>
 
       <Paper
@@ -27,12 +25,12 @@ export default function ConfiguracionPage() {
         radius="md"
         p="lg"
         style={{
-          backgroundColor: 'hsl(var(--card))',
-          borderColor: 'hsl(var(--border))',
+          backgroundColor: "hsl(var(--card))",
+          borderColor: "hsl(var(--border))",
         }}
       >
         <Stack gap="md">
-          <Settings size={22} style={{ color: 'hsl(var(--tl-taupe))' }} />
+          <Settings size={22} style={{ color: "hsl(var(--tl-taupe))" }} />
           <div>
             <Text size="sm" c="dimmed">
               Sistema
@@ -46,8 +44,8 @@ export default function ConfiguracionPage() {
             <Text>1.0 (desarrollo)</Text>
           </div>
           <Text size="sm" c="dimmed">
-            Próximamente podrás ajustar notificaciones, integraciones y parámetros
-            operativos desde esta sección.
+            Próximamente podrás ajustar notificaciones, integraciones y
+            parámetros operativos desde esta sección.
           </Text>
         </Stack>
       </Paper>

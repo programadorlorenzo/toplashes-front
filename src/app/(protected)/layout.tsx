@@ -1,23 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AppShell, Burger, Center, Group, Loader } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import Image from 'next/image';
-import { api } from '@/lib/api';
-import { hasAnyPermission } from '@/lib/permissions';
-import { Sidebar } from '@/components/sidebar';
-import { useAuthStore } from '@/stores/auth-store';
-import {
-  useBranchStore,
-  type BranchOption,
-} from '@/stores/branch-store';
-
-interface BranchResponse {
-  id: number;
-  name: string;
-}
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { AppShell, Burger, Center, Group, Loader } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { sucursalesApi } from "@/lib/api";
+import { hasAnyPermission } from "@/lib/permissions";
+import { Sidebar } from "@/components/sidebar";
+import { useAuthStore } from "@/stores/auth-store";
+import { useBranchStore, type BranchOption } from "@/stores/branch-store";
 
 export default function ProtectedLayout({
   children,
@@ -46,7 +37,7 @@ export default function ProtectedLayout({
   useEffect(() => {
     if (!ready) return;
     if (!isAuthenticated) {
-      router.replace('/auth/login');
+      router.replace("/auth/login");
     }
   }, [ready, isAuthenticated, router]);
 
@@ -63,13 +54,10 @@ export default function ProtectedLayout({
 
       if (
         branchIds.length > 0 &&
-        hasAnyPermission(user.permissions, [
-          'branches.read',
-          'branches.manage',
-        ])
+        hasAnyPermission(user.permissions, ["branches.read", "branches.manage"])
       ) {
         try {
-          const { data } = await api.get<BranchResponse[]>('/branches');
+          const { data } = await sucursalesApi.branchControllerFindAll();
           options = data
             .filter((b) => branchIds.includes(b.id))
             .map((b) => ({ id: b.id, name: b.name }));
@@ -95,8 +83,7 @@ export default function ProtectedLayout({
       }
 
       const currentValid =
-        selectedBranch &&
-        options.some((b) => b.id === selectedBranch.id);
+        selectedBranch && options.some((b) => b.id === selectedBranch.id);
 
       if (!currentValid) {
         selectBranch(options[0]);
@@ -108,14 +95,7 @@ export default function ProtectedLayout({
     return () => {
       cancelled = true;
     };
-  }, [
-    ready,
-    isAuthenticated,
-    user,
-    setBranches,
-    selectBranch,
-    selectedBranch,
-  ]);
+  }, [ready, isAuthenticated, user, setBranches, selectBranch, selectedBranch]);
 
   if (!ready || !isAuthenticated) {
     return (
@@ -127,56 +107,38 @@ export default function ProtectedLayout({
 
   return (
     <AppShell
-      header={{ height: 56 }}
       navbar={{
         width: 260,
-        breakpoint: 'sm',
+        breakpoint: "sm",
         collapsed: { mobile: !opened },
       }}
       padding="md"
       styles={{
         main: {
-          backgroundColor: 'hsl(var(--background))',
+          backgroundColor: "hsl(var(--background))",
         },
         navbar: {
-          backgroundColor: 'hsl(var(--sidebar-bg))',
-          borderRight: 'none',
-        },
-        header: {
-          backgroundColor: 'hsl(var(--card))',
-          borderBottom: '1px solid hsl(var(--border))',
+          backgroundColor: "hsl(var(--sidebar-bg))",
+          borderRight: "none",
         },
       }}
     >
-      <AppShell.Header px="md">
-        <Group h="100%" justify="space-between">
-          <Group gap="sm">
-            <Burger
-              opened={opened}
-              onClick={toggle}
-              hiddenFrom="sm"
-              size="sm"
-              aria-label="Menú"
-            />
-            <Image
-              src="/brand/logo-toplashes.jpg"
-              alt="Top Lashes Perú"
-              width={80}
-              height={36}
-              style={{
-                objectFit: 'contain',
-                borderRadius: '4px',
-              }}
-            />
-          </Group>
-        </Group>
-      </AppShell.Header>
-
       <AppShell.Navbar>
         <Sidebar onNavigate={close} />
       </AppShell.Navbar>
 
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main>
+        <Group hiddenFrom="sm" mb="sm">
+          <Burger
+            opened={opened}
+            onClick={toggle}
+            size="sm"
+            aria-label="Menú"
+            color="hsl(var(--tl-brown-dark))"
+          />
+        </Group>
+        {children}
+      </AppShell.Main>
     </AppShell>
   );
 }

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
+import { useMemo } from "react";
 import {
   Button,
   Checkbox,
@@ -11,20 +11,23 @@ import {
   Text,
   TextInput,
   Textarea,
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { primaryButtonStyles } from '@/lib/crud-styles';
-import { chain, maxLength, requerido } from '@/lib/validations';
-import type { Permission, Role } from '@/types/api';
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
+import type {
+  PermissionResponseDto,
+  RoleResponseDto,
+} from "@/generated-client";
+import { rolesApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { primaryButtonStyles } from "@/lib/crud-styles";
+import { chain, maxLength, requerido } from "@/lib/validations";
 
 interface RoleFormModalProps {
   opened: boolean;
   onClose: () => void;
-  role: Role | null;
-  allPermissions: Permission[];
+  role: RoleResponseDto | null;
+  allPermissions: PermissionResponseDto[];
   onSaved: () => void;
 }
 
@@ -33,23 +36,23 @@ function RoleForm({
   allPermissions,
   onClose,
   onSaved,
-}: Omit<RoleFormModalProps, 'opened'>) {
+}: Omit<RoleFormModalProps, "opened">) {
   const isEdit = Boolean(role);
 
   const form = useForm({
-    mode: 'uncontrolled',
+    mode: "uncontrolled",
     initialValues: {
-      name: role?.name ?? '',
-      description: role?.description ?? '',
+      name: role?.name ?? "",
+      description: role?.description ?? "",
       permissionIds: (role?.permissions ?? []).map((p) => String(p.id)),
     },
     validate: {
-      name: chain(requerido('Nombre'), maxLength('Nombre', 80)),
+      name: chain(requerido("Nombre"), maxLength("Nombre", 80)),
     },
   });
 
   const grouped = useMemo(() => {
-    const map = new Map<string, Permission[]>();
+    const map = new Map<string, PermissionResponseDto[]>();
     for (const perm of allPermissions) {
       const list = map.get(perm.module) ?? [];
       list.push(perm);
@@ -66,22 +69,22 @@ function RoleForm({
         permissionIds: values.permissionIds.map(Number),
       };
       if (isEdit && role) {
-        await api.put(`/roles/${role.id}`, payload);
+        await rolesApi.roleControllerUpdate(role.id, payload);
       } else {
-        await api.post('/roles', payload);
+        await rolesApi.roleControllerCreate(payload);
       }
       notifications.show({
-        title: isEdit ? 'Rol actualizado' : 'Rol creado',
+        title: isEdit ? "Rol actualizado" : "Rol creado",
         message: values.name,
-        color: 'green',
+        color: "green",
       });
       onSaved();
       onClose();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   });
@@ -89,22 +92,22 @@ function RoleForm({
   return (
     <form onSubmit={handleSubmit}>
       <Stack gap="md">
-        <TextInput label="Nombre" required {...form.getInputProps('name')} />
+        <TextInput label="Nombre" required {...form.getInputProps("name")} />
         <Textarea
           label="Descripción"
           minRows={2}
-          {...form.getInputProps('description')}
+          {...form.getInputProps("description")}
         />
         <Checkbox.Group
           label="Permisos"
-          {...form.getInputProps('permissionIds')}
+          {...form.getInputProps("permissionIds")}
         >
           <ScrollArea.Autosize mah={320} mt="xs">
             <Stack gap="md">
               {grouped.map(([module, perms]) => (
                 <Stack key={module} gap={6}>
                   <Text size="sm" fw={600} tt="capitalize">
-                    {module.replace(/_/g, ' ')}
+                    {module.replace(/_/g, " ")}
                   </Text>
                   <Stack gap={4} pl="xs">
                     {perms.map((perm) => (
@@ -146,11 +149,16 @@ export function RoleFormModal(props: RoleFormModalProps) {
     <Modal
       opened={opened}
       onClose={onClose}
-      title={role ? 'Editar rol' : 'Nuevo rol'}
+      title={role ? "Editar rol" : "Nuevo rol"}
       size="lg"
     >
       {opened ? (
-        <RoleForm key={role?.id ?? 'new'} role={role} onClose={onClose} {...rest} />
+        <RoleForm
+          key={role?.id ?? "new"}
+          role={role}
+          onClose={onClose}
+          {...rest}
+        />
       ) : null}
     </Modal>
   );

@@ -1,4 +1,4 @@
 allowBuilds:
-  '@openapitools/openapi-generator-cli': set this to true or false
+  '@openapitools/openapi-generator-cli': true
   sharp: false
   unrs-resolver: false

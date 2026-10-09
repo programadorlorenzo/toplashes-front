@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   Badge,
   Center,
@@ -11,23 +11,36 @@ import {
   Stack,
   Text,
   Title,
-} from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates';
-import { notifications } from '@mantine/notifications';
+} from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
+import { notifications } from "@mantine/notifications";
 import {
   CalendarCheck,
   CircleDollarSign,
   Clock,
   Sparkles,
   Users,
-} from 'lucide-react';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { formatSoles } from '@/lib/format';
-import { todayISO, toISODate } from '@/lib/date-utils';
-import { useAuthStore } from '@/stores/auth-store';
-import { useBranchStore } from '@/stores/branch-store';
-import type { DashboardDailyStats } from '@/types/api';
+} from "lucide-react";
+import type { DailyStatsResponseDto } from "@/generated-client";
+import { dashboardApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { formatSoles } from "@/lib/format";
+import { todayISO, toISODate } from "@/lib/date-utils";
+import { useAuthStore } from "@/stores/auth-store";
+import { useBranchStore } from "@/stores/branch-store";
+function formatMinutesField(value: object | null): string {
+  if (value === null || typeof value !== "number") {
+    return "—";
+  }
+  return `${value} min`;
+}
+
+function formatSignedMinutesField(value: object | null): string {
+  if (value === null || typeof value !== "number") {
+    return "—";
+  }
+  return `${value > 0 ? "+" : ""}${value} min`;
+}
 
 interface StatCardProps {
   title: string;
@@ -43,9 +56,9 @@ function StatCard({ title, value, icon, accent }: StatCardProps) {
       radius="md"
       p="lg"
       style={{
-        backgroundColor: 'hsl(var(--card))',
-        borderColor: 'hsl(var(--border))',
-        height: '100%',
+        backgroundColor: "hsl(var(--card))",
+        borderColor: "hsl(var(--border))",
+        height: "100%",
       }}
     >
       <Stack gap="xs">
@@ -54,12 +67,14 @@ function StatCard({ title, value, icon, accent }: StatCardProps) {
             {title}
           </Text>
           {icon && (
-            <span style={{ color: accent ?? 'hsl(var(--tl-taupe))', opacity: 0.85 }}>
+            <span
+              style={{ color: accent ?? "hsl(var(--tl-taupe))", opacity: 0.85 }}
+            >
               {icon}
             </span>
           )}
         </Group>
-        <Text size="xl" fw={600} style={{ color: 'hsl(var(--tl-brown-dark))' }}>
+        <Text size="xl" fw={600} style={{ color: "hsl(var(--tl-brown-dark))" }}>
           {value}
         </Text>
       </Stack>
@@ -70,10 +85,10 @@ function StatCard({ title, value, icon, accent }: StatCardProps) {
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const selectedBranch = useBranchStore((s) => s.selectedBranch);
-  const firstName = user?.name?.split(' ')[0] ?? 'equipo';
+  const firstName = user?.name?.split(" ")[0] ?? "equipo";
 
   const [date, setDate] = useState<string>(todayISO());
-  const [stats, setStats] = useState<DashboardDailyStats | null>(null);
+  const [stats, setStats] = useState<DailyStatsResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -84,15 +99,16 @@ export default function DashboardPage() {
     }
     setLoading(true);
     try {
-      const { data } = await api.get<DashboardDailyStats>('/dashboard/daily', {
-        params: { branchId: selectedBranch.id, date },
-      });
+      const { data } = await dashboardApi.dashboardControllerGetDailyStats(
+        selectedBranch.id,
+        date,
+      );
       setStats(data);
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar dashboard',
+        title: "Error al cargar dashboard",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
       setStats(null);
     } finally {
@@ -104,7 +120,7 @@ export default function DashboardPage() {
     void load();
   }, [load]);
 
-  const taupe = 'hsl(var(--tl-taupe))';
+  const taupe = "hsl(var(--tl-taupe))";
 
   return (
     <Stack gap="xl">
@@ -113,16 +129,16 @@ export default function DashboardPage() {
           <Title
             order={2}
             style={{
-              fontFamily: 'var(--font-heading), Georgia, serif',
-              color: 'hsl(var(--tl-brown-dark))',
+              fontFamily: "var(--font-heading), Georgia, serif",
+              color: "hsl(var(--tl-brown-dark))",
               fontWeight: 500,
             }}
           >
             Dashboard
           </Title>
           <Text c="dimmed">
-            Bienvenida, {firstName}. Resumen de{' '}
-            {selectedBranch?.name ?? 'tu local'}.
+            Bienvenida, {firstName}. Resumen de{" "}
+            {selectedBranch?.name ?? "tu local"}.
           </Text>
         </Stack>
         <DatePickerInput
@@ -132,13 +148,20 @@ export default function DashboardPage() {
             if (value) setDate(toISODate(value));
           }}
           maxDate={new Date()}
-          w={{ base: '100%', sm: 220 }}
+          w={{ base: "100%", sm: 220 }}
         />
       </Group>
 
       {!selectedBranch && (
-        <Paper withBorder p="lg" radius="md" style={{ borderColor: 'hsl(var(--border))' }}>
-          <Text c="dimmed">Selecciona un local en la barra lateral para ver estadísticas.</Text>
+        <Paper
+          withBorder
+          p="lg"
+          radius="md"
+          style={{ borderColor: "hsl(var(--border))" }}
+        >
+          <Text c="dimmed">
+            Selecciona un local en la barra lateral para ver estadísticas.
+          </Text>
         </Paper>
       )}
 
@@ -160,7 +183,10 @@ export default function DashboardPage() {
               />
             </Grid.Col>
             <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 2 }}>
-              <StatCard title="Confirmadas" value={stats.confirmedReservations} />
+              <StatCard
+                title="Confirmadas"
+                value={stats.confirmedReservations}
+              />
             </Grid.Col>
             <Grid.Col span={{ base: 12, sm: 6, md: 4, lg: 2 }}>
               <StatCard title="En atención" value={stats.inServiceCount} />
@@ -186,7 +212,10 @@ export default function DashboardPage() {
               />
             </Grid.Col>
             <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
-              <StatCard title="Colaboradoras ocupadas" value={stats.employeesOccupied} />
+              <StatCard
+                title="Colaboradoras ocupadas"
+                value={stats.employeesOccupied}
+              />
             </Grid.Col>
             <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
               <StatCard
@@ -211,13 +240,13 @@ export default function DashboardPage() {
                 radius="md"
                 p="lg"
                 style={{
-                  backgroundColor: 'hsl(var(--card))',
-                  borderColor: 'hsl(var(--border))',
+                  backgroundColor: "hsl(var(--card))",
+                  borderColor: "hsl(var(--border))",
                 }}
               >
                 <Group gap="xs" mb="md">
                   <Sparkles size={18} style={{ color: taupe }} />
-                  <Text fw={600} style={{ color: 'hsl(var(--tl-brown-dark))' }}>
+                  <Text fw={600} style={{ color: "hsl(var(--tl-brown-dark))" }}>
                     Top servicios
                   </Text>
                 </Group>
@@ -250,13 +279,13 @@ export default function DashboardPage() {
                 radius="md"
                 p="lg"
                 style={{
-                  backgroundColor: 'hsl(var(--card))',
-                  borderColor: 'hsl(var(--border))',
+                  backgroundColor: "hsl(var(--card))",
+                  borderColor: "hsl(var(--border))",
                 }}
               >
                 <Group gap="xs" mb="md">
                   <Clock size={18} style={{ color: taupe }} />
-                  <Text fw={600} style={{ color: 'hsl(var(--tl-brown-dark))' }}>
+                  <Text fw={600} style={{ color: "hsl(var(--tl-brown-dark))" }}>
                     Tiempos de atención
                   </Text>
                 </Group>
@@ -266,9 +295,7 @@ export default function DashboardPage() {
                       Promedio de atención
                     </Text>
                     <Text fw={600} size="lg">
-                      {stats.averageServiceTime != null
-                        ? `${stats.averageServiceTime} min`
-                        : '—'}
+                      {formatMinutesField(stats.averageServiceTime)}
                     </Text>
                   </div>
                   <div>
@@ -276,9 +303,7 @@ export default function DashboardPage() {
                       Diferencia estimado vs. real (promedio)
                     </Text>
                     <Text fw={600} size="lg">
-                      {stats.estimateVsActualDiff != null
-                        ? `${stats.estimateVsActualDiff > 0 ? '+' : ''}${stats.estimateVsActualDiff} min`
-                        : '—'}
+                      {formatSignedMinutesField(stats.estimateVsActualDiff)}
                     </Text>
                   </div>
                 </Stack>

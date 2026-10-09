@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Alert,
   Center,
@@ -13,27 +13,37 @@ import {
   Stack,
   Text,
   Title,
-} from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates';
-import { notifications } from '@mantine/notifications';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { CalendarDayView } from './components/calendar-day-view';
-import { CalendarWeekView } from './components/calendar-week-view';
-import { ReservationPreviewDrawer } from './components/reservation-preview-drawer';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
+} from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
+import { notifications } from "@mantine/notifications";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDayView } from "./components/calendar-day-view";
+import { CalendarWeekView } from "./components/calendar-week-view";
+import { ReservationPreviewDrawer } from "./components/reservation-preview-drawer";
+import type {
+  BranchResponseDto,
+  EmployeeResponseDto,
+  ReservationResponseDto,
+  ServiceResponseDto,
+} from "@/generated-client";
+import {
+  clientesApi,
+  colaboradorasApi,
+  reservasApi,
+  serviciosApi,
+  sucursalesApi,
+} from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   addDaysIso,
   isoTimeOnDate,
   startOfWeekIso,
   weekDayDatesFromMonday,
-} from '@/lib/calendar-utils';
-import { cardPaperStyle, pageTitleStyle } from '@/lib/crud-styles';
-import { formatFechaLegible, todayISO, toISODate } from '@/lib/date-utils';
-import { useBranchStore } from '@/stores/branch-store';
-import type { Branch, Customer, Employee, Reservation, Service } from '@/types/api';
-
-type CalendarView = 'day' | 'week';
+} from "@/lib/calendar-utils";
+import { cardPaperStyle, pageTitleStyle } from "@/lib/crud-styles";
+import { formatFechaLegible, todayISO, toISODate } from "@/lib/date-utils";
+import { useBranchStore } from "@/stores/branch-store";
+type CalendarView = "day" | "week";
 
 async function fetchCustomersMap(
   customerIds: number[],
@@ -42,7 +52,7 @@ async function fetchCustomersMap(
   const entries = await Promise.all(
     unique.map(async (id) => {
       try {
-        const { data } = await api.get<Customer>(`/customers/${id}`);
+        const { data } = await clientesApi.customerControllerFindOne(id);
         return [id, `${data.firstName} ${data.lastName}`] as const;
       } catch {
         return [id, `Cliente #${id}`] as const;
@@ -58,13 +68,19 @@ export default function CalendarioPage() {
   const selectedBranch = useBranchStore((s) => s.selectedBranch);
   const selectBranch = useBranchStore((s) => s.selectBranch);
 
-  const [view, setView] = useState<CalendarView>('day');
+  const [view, setView] = useState<CalendarView>("day");
   const [date, setDate] = useState<string>(todayISO());
-  const [branchDetail, setBranchDetail] = useState<Branch | null>(null);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [customerNames, setCustomerNames] = useState<Record<number, string>>({});
+  const [branchDetail, setBranchDetail] = useState<BranchResponseDto | null>(
+    null,
+  );
+  const [employees, setEmployees] = useState<EmployeeResponseDto[]>([]);
+  const [services, setServices] = useState<ServiceResponseDto[]>([]);
+  const [reservations, setReservations] = useState<ReservationResponseDto[]>(
+    [],
+  );
+  const [customerNames, setCustomerNames] = useState<Record<number, string>>(
+    {},
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<number | null>(null);
@@ -108,17 +124,15 @@ export default function CalendarioPage() {
 
     try {
       const datesToLoad =
-        view === 'day' ? [date] : weekDayDatesFromMonday(startOfWeekIso(date));
+        view === "day" ? [date] : weekDayDatesFromMonday(startOfWeekIso(date));
 
       const [branchRes, employeesRes, servicesRes, ...reservationResponses] =
         await Promise.all([
-          api.get<Branch>(`/branches/${branchId}`),
-          api.get<Employee[]>('/employees'),
-          api.get<Service[]>('/services'),
+          sucursalesApi.branchControllerFindOne(branchId),
+          colaboradorasApi.employeeControllerFindAll(),
+          serviciosApi.serviceControllerFindAll(),
           ...datesToLoad.map((d) =>
-            api.get<Reservation[]>('/reservations', {
-              params: { branchId, date: d },
-            }),
+            reservasApi.reservationControllerFindAll(branchId, d),
           ),
         ]);
 
@@ -127,7 +141,7 @@ export default function CalendarioPage() {
       setServices(servicesRes.data);
 
       const merged = reservationResponses.flatMap((r) => r.data);
-      const byId = new Map<number, Reservation>();
+      const byId = new Map<number, ReservationResponseDto>();
       for (const item of merged) {
         byId.set(item.id, item);
       }
@@ -139,7 +153,11 @@ export default function CalendarioPage() {
     } catch (err) {
       const message = getApiErrorMessage(err);
       setError(message);
-      notifications.show({ title: 'Error al cargar calendario', message, color: 'red' });
+      notifications.show({
+        title: "Error al cargar calendario",
+        message,
+        color: "red",
+      });
     } finally {
       setLoading(false);
     }
@@ -158,8 +176,8 @@ export default function CalendarioPage() {
     ? customerNames[previewReservation.customerId]
     : undefined;
 
-  const openTime = branchDetail?.openTime ?? '09:00';
-  const closeTime = branchDetail?.closeTime ?? '20:00';
+  const openTime = branchDetail?.openTime ?? "09:00";
+  const closeTime = branchDetail?.closeTime ?? "20:00";
 
   const handleEmptySlot = (employeeId: number, time: string) => {
     if (!branchId) return;
@@ -194,14 +212,14 @@ export default function CalendarioPage() {
           value={view}
           onChange={(v) => setView(v as CalendarView)}
           data={[
-            { label: 'Día', value: 'day' },
-            { label: 'Semana', value: 'week' },
+            { label: "Día", value: "day" },
+            { label: "Semana", value: "week" },
           ]}
         />
       </Group>
 
       <Group wrap="wrap" gap="sm">
-        {branches.length > 1 ? (
+        {branches.length >= 1 ? (
           <Select
             label="Local"
             data={branchOptions}
@@ -230,22 +248,26 @@ export default function CalendarioPage() {
               <Group gap={4}>
                 <ChevronLeft
                   size={18}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setDate(addDaysIso(date, view === 'day' ? -1 : -7))}
+                  style={{ cursor: "pointer" }}
+                  onClick={() =>
+                    setDate(addDaysIso(date, view === "day" ? -1 : -7))
+                  }
                   aria-label="Anterior"
                 />
                 <Text
                   size="sm"
                   px="xs"
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: "pointer" }}
                   onClick={() => setDate(todayISO())}
                 >
                   Hoy
                 </Text>
                 <ChevronRight
                   size={18}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setDate(addDaysIso(date, view === 'day' ? 1 : 7))}
+                  style={{ cursor: "pointer" }}
+                  onClick={() =>
+                    setDate(addDaysIso(date, view === "day" ? 1 : 7))
+                  }
                   aria-label="Siguiente"
                 />
               </Group>
@@ -275,7 +297,7 @@ export default function CalendarioPage() {
           <Text c="dimmed" ta="center" py="xl">
             No hay colaboradoras activas en este local.
           </Text>
-        ) : view === 'day' ? (
+        ) : view === "day" ? (
           <CalendarDayView
             date={date}
             openTime={openTime}

@@ -1,19 +1,19 @@
-import { DateTime } from 'luxon';
+import { DateTime } from "luxon";
 
-const ZONE = 'America/Lima';
+const ZONE = "America/Lima";
 
 export const CALENDAR_SLOT_MINUTES = 30;
 export const CALENDAR_SLOT_HEIGHT_PX = 44;
 
 export function parseTimeToMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
+  const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
 }
 
 export function minutesToTimeLabel(totalMinutes: number): string {
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 export function generateTimeSlots(
@@ -44,16 +44,17 @@ export function minutesFromOpenOnDate(
   return Math.max(0, startMinutes - openMinutes);
 }
 
-export function durationMinutesBetween(isoStart: string, isoEnd: string): number {
+export function durationMinutesBetween(
+  isoStart: string,
+  isoEnd: string,
+): number {
   const start = DateTime.fromISO(isoStart, { zone: ZONE });
   const end = DateTime.fromISO(isoEnd, { zone: ZONE });
-  return Math.max(end.diff(start, 'minutes').minutes, CALENDAR_SLOT_MINUTES);
+  return Math.max(end.diff(start, "minutes").minutes, CALENDAR_SLOT_MINUTES);
 }
 
 export function addDaysIso(dateIso: string, days: number): string {
-  return DateTime.fromISO(dateIso, { zone: ZONE })
-    .plus({ days })
-    .toISODate()!;
+  return DateTime.fromISO(dateIso, { zone: ZONE }).plus({ days }).toISODate()!;
 }
 
 export function startOfWeekIso(dateIso: string): string {

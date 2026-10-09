@@ -1,15 +1,8 @@
-'use client';
+"use client";
 
-import {
-  Button,
-  Group,
-  Stack,
-  Table,
-  Text,
-  TextInput,
-} from '@mantine/core';
-import { WORK_DAYS } from '@/lib/constants';
-import type { ScheduleEntry } from '@/types/api';
+import { Button, Group, Stack, Table, Text, TextInput } from "@mantine/core";
+import { WORK_DAYS } from "@/lib/constants";
+import type { ScheduleResponseDto } from "@/generated-client";
 
 export interface DayScheduleDraft {
   dayOfWeek: number;
@@ -20,11 +13,15 @@ export interface DayScheduleDraft {
 
 interface ScheduleGridProps {
   drafts: DayScheduleDraft[];
-  onChange: (dayOfWeek: number, field: 'startTime' | 'endTime', value: string) => void;
+  onChange: (
+    dayOfWeek: number,
+    field: "startTime" | "endTime",
+    value: string,
+  ) => void;
   onSaveDay: (dayOfWeek: number) => void;
   savingDay: number | null;
   canManage: boolean;
-  existing: ScheduleEntry[];
+  existing: ScheduleResponseDto[];
 }
 
 export function ScheduleGrid({
@@ -63,7 +60,11 @@ export function ScheduleGrid({
                   disabled={!canManage}
                   placeholder="09:00"
                   onChange={(e) =>
-                    onChange(draft.dayOfWeek, 'startTime', e.currentTarget.value)
+                    onChange(
+                      draft.dayOfWeek,
+                      "startTime",
+                      e.currentTarget.value,
+                    )
                   }
                   maw={100}
                 />
@@ -74,7 +75,7 @@ export function ScheduleGrid({
                   disabled={!canManage}
                   placeholder="18:00"
                   onChange={(e) =>
-                    onChange(draft.dayOfWeek, 'endTime', e.currentTarget.value)
+                    onChange(draft.dayOfWeek, "endTime", e.currentTarget.value)
                   }
                   maw={100}
                 />
@@ -87,7 +88,7 @@ export function ScheduleGrid({
                     loading={savingDay === draft.dayOfWeek}
                     onClick={() => onSaveDay(draft.dayOfWeek)}
                   >
-                    {hasSaved ? 'Actualizar' : 'Guardar'}
+                    {hasSaved ? "Actualizar" : "Guardar"}
                   </Button>
                 </Table.Td>
               ) : null}
@@ -100,9 +101,9 @@ export function ScheduleGrid({
 }
 
 export function buildDefaultDrafts(
-  existing: ScheduleEntry[],
-  fallbackStart = '09:00',
-  fallbackEnd = '18:00',
+  existing: ScheduleResponseDto[],
+  fallbackStart = "09:00",
+  fallbackEnd = "18:00",
 ): DayScheduleDraft[] {
   return WORK_DAYS.map((day) => {
     const row = existing.find((s) => s.dayOfWeek === day.value);
@@ -125,7 +126,11 @@ export function ScheduleGridLegend() {
   );
 }
 
-export function ScheduleGridHeader({ employeeLabel }: { employeeLabel: string }) {
+export function ScheduleGridHeader({
+  employeeLabel,
+}: {
+  employeeLabel: string;
+}) {
   return (
     <Group justify="space-between">
       <Text fw={600}>{employeeLabel}</Text>

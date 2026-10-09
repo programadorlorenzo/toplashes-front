@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { Grid, Paper, Stack, Text, Title } from '@mantine/core';
-import { BarChart3, CalendarRange, Users } from 'lucide-react';
+import { Grid, Paper, Stack, Text, Title } from "@mantine/core";
+import { BarChart3, CalendarRange, Users } from "lucide-react";
 
 const REPORT_CARDS = [
   {
-    title: 'Ventas por periodo',
-    description: 'Ingresos, métodos de pago y comparativos.',
+    title: "Ventas por periodo",
+    description: "Ingresos, métodos de pago y comparativos.",
     icon: BarChart3,
   },
   {
-    title: 'Ocupación de colaboradoras',
-    description: 'Horas atendidas y tiempos muertos.',
+    title: "Ocupación de colaboradoras",
+    description: "Horas atendidas y tiempos muertos.",
     icon: Users,
   },
   {
-    title: 'Reservas e inasistencias',
-    description: 'Tendencias de agenda y no-show.',
+    title: "Reservas e inasistencias",
+    description: "Tendencias de agenda y no-show.",
     icon: CalendarRange,
   },
 ];
@@ -28,16 +28,14 @@ export default function ReportesPage() {
         <Title
           order={2}
           style={{
-            fontFamily: 'var(--font-heading), Georgia, serif',
-            color: 'hsl(var(--tl-brown-dark))',
+            fontFamily: "var(--font-heading), Georgia, serif",
+            color: "hsl(var(--tl-brown-dark))",
             fontWeight: 500,
           }}
         >
           Reportes
         </Title>
-        <Text c="dimmed">
-          Análisis operativos y financieros del negocio.
-        </Text>
+        <Text c="dimmed">Análisis operativos y financieros del negocio.</Text>
       </Stack>
 
       <Grid>
@@ -50,14 +48,14 @@ export default function ReportesPage() {
                 radius="md"
                 p="lg"
                 style={{
-                  backgroundColor: 'hsl(var(--card))',
-                  borderColor: 'hsl(var(--border))',
-                  height: '100%',
+                  backgroundColor: "hsl(var(--card))",
+                  borderColor: "hsl(var(--border))",
+                  height: "100%",
                 }}
               >
                 <Stack gap="sm">
-                  <Icon size={22} style={{ color: 'hsl(var(--tl-taupe))' }} />
-                  <Text fw={600} style={{ color: 'hsl(var(--tl-brown-dark))' }}>
+                  <Icon size={22} style={{ color: "hsl(var(--tl-taupe))" }} />
+                  <Text fw={600} style={{ color: "hsl(var(--tl-brown-dark))" }}>
                     {card.title}
                   </Text>
                   <Text size="sm" c="dimmed">

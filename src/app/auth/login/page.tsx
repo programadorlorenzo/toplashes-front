@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Box,
   Button,
@@ -11,18 +11,12 @@ import {
   Stack,
   Text,
   TextInput,
-} from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { notifications } from '@mantine/notifications';
-import { isEmail, isNotEmpty } from '@mantine/form';
-import { api, API_BASE_URL } from '@/lib/api';
-import { useAuthStore, type AuthUser } from '@/stores/auth-store';
-
-interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: AuthUser;
-}
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
+import { isEmail, isNotEmpty } from "@mantine/form";
+import { authApi } from "@/lib/api";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,49 +25,46 @@ export default function LoginPage() {
 
   const form = useForm({
     initialValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
     validate: {
-      email: isEmail('Ingresa un correo válido'),
-      password: isNotEmpty('La contraseña es obligatoria'),
+      email: isEmail("Ingresa un correo válido"),
+      password: isNotEmpty("La contraseña es obligatoria"),
     },
   });
 
   const handleSubmit = form.onSubmit(async (values) => {
     setLoading(true);
     try {
-      const { data } = await api.post<LoginResponse>(
-        `${API_BASE_URL}/auth/login`,
-        values,
-      );
+      const { data } = await authApi.authControllerLogin(values);
       setAuth(data.accessToken, data.user);
       notifications.show({
-        title: 'Bienvenida',
+        title: "Bienvenida",
         message: `Hola, ${data.user.name}`,
-        color: 'green',
+        color: "green",
       });
-      router.replace('/dashboard');
+      router.replace("/dashboard");
     } catch (error: unknown) {
       const message =
         error &&
-        typeof error === 'object' &&
-        'response' in error &&
+        typeof error === "object" &&
+        "response" in error &&
         error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
+        typeof error.response === "object" &&
+        "data" in error.response &&
         error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data
+        typeof error.response.data === "object" &&
+        "message" in error.response.data
           ? String(
               (error.response.data as { message: string | string[] }).message,
             )
-          : 'No pudimos iniciar sesión. Verifica tus credenciales.';
+          : "No pudimos iniciar sesión. Verifica tus credenciales.";
 
       notifications.show({
-        title: 'Error al iniciar sesión',
-        message: Array.isArray(message) ? message.join(', ') : message,
-        color: 'red',
+        title: "Error al iniciar sesión",
+        message: Array.isArray(message) ? message.join(", ") : message,
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -85,46 +76,47 @@ export default function LoginPage() {
       component="main"
       mih="100dvh"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1.5rem',
-        background: 'hsl(var(--tl-taupe))',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1.5rem",
+        background: "hsl(var(--tl-taupe))",
       }}
     >
       <Paper
         shadow="xl"
         radius="lg"
-        p={{ base: 'xl', sm: 40 }}
+        p={{ base: "xl", sm: 40 }}
         w="100%"
         maw={420}
         style={{
-          border: 'none',
-          backgroundColor: 'hsl(var(--card))',
+          border: "none",
+          backgroundColor: "hsl(var(--card))",
         }}
       >
         <Stack gap="xl">
           <Stack gap="sm" align="center">
             <Box
               style={{
-                width: 180,
-                height: 100,
-                position: 'relative',
-                borderRadius: 'var(--mantine-radius-md)',
-                overflow: 'hidden',
+                width: 260,
+                height: 140,
+                position: "relative",
+                borderRadius: "var(--mantine-radius-md)",
+                overflow: "hidden",
               }}
             >
               <Image
                 src="/brand/logo-toplashes.jpg"
                 alt="Top Lashes Perú"
                 fill
-                style={{ objectFit: 'contain' }}
+                sizes="260px"
+                style={{ objectFit: "contain" }}
                 priority
               />
             </Box>
             <Text
               size="sm"
-              style={{ color: 'hsl(var(--tl-brown-medium))' }}
+              style={{ color: "hsl(var(--tl-brown-medium))" }}
               ta="center"
             >
               Panel Administrativo
@@ -138,18 +130,18 @@ export default function LoginPage() {
                 placeholder="tu@correo.com"
                 autoComplete="email"
                 styles={{
-                  label: { color: 'hsl(var(--tl-brown))' },
+                  label: { color: "hsl(var(--tl-brown))" },
                 }}
-                {...form.getInputProps('email')}
+                {...form.getInputProps("email")}
               />
               <PasswordInput
                 label="Contraseña"
                 placeholder="Tu contraseña"
                 autoComplete="current-password"
                 styles={{
-                  label: { color: 'hsl(var(--tl-brown))' },
+                  label: { color: "hsl(var(--tl-brown))" },
                 }}
-                {...form.getInputProps('password')}
+                {...form.getInputProps("password")}
               />
               <Button
                 type="submit"
@@ -159,11 +151,11 @@ export default function LoginPage() {
                 size="md"
                 styles={{
                   root: {
-                    backgroundColor: 'hsl(var(--tl-taupe))',
-                    color: 'hsl(var(--tl-ivory))',
+                    backgroundColor: "hsl(var(--tl-taupe))",
+                    color: "hsl(var(--tl-ivory))",
                     fontWeight: 500,
-                    letterSpacing: '0.03em',
-                    transition: 'all 0.2s ease',
+                    letterSpacing: "0.03em",
+                    transition: "all 0.2s ease",
                   },
                 }}
               >

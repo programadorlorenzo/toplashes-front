@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   ActionIcon,
   Badge,
@@ -15,30 +15,34 @@ import {
   Table,
   Text,
   Tooltip,
-} from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { Pencil, Power, Trash2 } from 'lucide-react';
-import { ActiveBadge } from '@/components/crud/active-badge';
-import { ListPageHeader } from '@/components/crud/list-page-header';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle } from '@/lib/crud-styles';
-import { hasAnyPermission } from '@/lib/permissions';
-import { useAuthStore } from '@/stores/auth-store';
-import type { Branch, Role, User } from '@/types/api';
-import { UserFormModal } from './components/user-form-modal';
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { Pencil, Power, Trash2 } from "lucide-react";
+import { ActiveBadge } from "@/components/crud/active-badge";
+import { ListPageHeader } from "@/components/crud/list-page-header";
+import type {
+  BranchResponseDto,
+  RoleResponseDto,
+  UserResponseDto,
+} from "@/generated-client";
+import { rolesApi, sucursalesApi, usuariosApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { cardPaperStyle } from "@/lib/crud-styles";
+import { hasAnyPermission } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/auth-store";
+import { UserFormModal } from "./components/user-form-modal";
 
 export default function UsuariosPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? []);
-  const canManage = hasAnyPermission(permissions, ['users.manage']);
+  const canManage = hasAnyPermission(permissions, ["users.manage"]);
 
-  const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const [users, setUsers] = useState<UserResponseDto[]>([]);
+  const [roles, setRoles] = useState<RoleResponseDto[]>([]);
+  const [branches, setBranches] = useState<BranchResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<User | null>(null);
-  const [toDelete, setToDelete] = useState<User | null>(null);
+  const [editing, setEditing] = useState<UserResponseDto | null>(null);
+  const [toDelete, setToDelete] = useState<UserResponseDto | null>(null);
   const [formOpened, formHandlers] = useDisclosure(false);
   const [deleteOpened, deleteHandlers] = useDisclosure(false);
 
@@ -46,18 +50,18 @@ export default function UsuariosPage() {
     setLoading(true);
     try {
       const [u, r, b] = await Promise.all([
-        api.get<User[]>('/users'),
-        api.get<Role[]>('/roles'),
-        api.get<Branch[]>('/branches'),
+        usuariosApi.userControllerFindAll(),
+        rolesApi.roleControllerFindAll(),
+        sucursalesApi.branchControllerFindAll(),
       ]);
       setUsers(u.data);
       setRoles(r.data);
       setBranches(b.data);
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar',
+        title: "Error al cargar",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -68,15 +72,17 @@ export default function UsuariosPage() {
     void load();
   }, [load]);
 
-  const toggleActive = async (user: User) => {
+  const toggleActive = async (user: UserResponseDto) => {
     try {
-      await api.put(`/users/${user.id}`, { isActive: !user.isActive });
+      await usuariosApi.userControllerUpdate(user.id, {
+        isActive: !user.isActive,
+      });
       void load();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   };
@@ -84,20 +90,20 @@ export default function UsuariosPage() {
   const confirmDelete = async () => {
     if (!toDelete) return;
     try {
-      await api.delete(`/users/${toDelete.id}`);
+      await usuariosApi.userControllerRemove(toDelete.id);
       notifications.show({
-        title: 'Usuario eliminado',
+        title: "Usuario eliminado",
         message: toDelete.name,
-        color: 'green',
+        color: "green",
       });
       deleteHandlers.close();
       setToDelete(null);
       void load();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   };
@@ -166,10 +172,12 @@ export default function UsuariosPage() {
                               <Pencil size={16} />
                             </ActionIcon>
                           </Tooltip>
-                          <Tooltip label={user.isActive ? 'Desactivar' : 'Activar'}>
+                          <Tooltip
+                            label={user.isActive ? "Desactivar" : "Activar"}
+                          >
                             <ActionIcon
                               variant="subtle"
-                              color={user.isActive ? 'orange' : 'green'}
+                              color={user.isActive ? "orange" : "green"}
                               onClick={() => void toggleActive(user)}
                             >
                               <Power size={16} />

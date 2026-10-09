@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   ActionIcon,
   Anchor,
@@ -14,43 +14,48 @@ import {
   Text,
   TextInput,
   Tooltip,
-} from '@mantine/core';
-import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { MessageCircle, Pencil, Search } from 'lucide-react';
-import { ListPageHeader } from '@/components/crud/list-page-header';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle } from '@/lib/crud-styles';
-import { whatsappUrl } from '@/lib/format';
-import { hasAnyPermission } from '@/lib/permissions';
-import { useAuthStore } from '@/stores/auth-store';
-import type { Customer } from '@/types/api';
-import { CustomerFormModal } from './components/customer-form-modal';
+} from "@mantine/core";
+import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { CalendarDays, MessageCircle, Pencil, Search } from "lucide-react";
+import { ListPageHeader } from "@/components/crud/list-page-header";
+import { CustomerReservationsModal } from "@/components/customer-reservations-modal";
+import { ReservationDetailModal } from "@/components/reservation-detail-modal";
+import type { CustomerResponseDto } from "@/generated-client";
+import { clientesApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { cardPaperStyle } from "@/lib/crud-styles";
+import { whatsappUrl } from "@/lib/format";
+import { hasAnyPermission } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/auth-store";
+import { CustomerFormModal } from "./components/customer-form-modal";
 
 export default function ClientesPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? []);
-  const canManage = hasAnyPermission(permissions, ['customers.manage']);
+  const canManage = hasAnyPermission(permissions, ["customers.manage"]);
 
-  const [items, setItems] = useState<Customer[]>([]);
+  const [items, setItems] = useState<CustomerResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebouncedValue(search, 350);
-  const [editing, setEditing] = useState<Customer | null>(null);
+  const [editing, setEditing] = useState<CustomerResponseDto | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
+  const [historyCustomer, setHistoryCustomer] =
+    useState<CustomerResponseDto | null>(null);
+  const [detailReservationId, setDetailReservationId] = useState<number | null>(
+    null,
+  );
 
   const load = useCallback(async (query?: string) => {
     setLoading(true);
     try {
-      const { data } = await api.get<Customer[]>('/customers', {
-        params: query ? { search: query } : undefined,
-      });
+      const { data } = await clientesApi.customerControllerFindAll(query);
       setItems(data);
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar',
+        title: "Error al cargar",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -104,7 +109,7 @@ export default function ClientesPage() {
                   <Table.Th>Teléfono</Table.Th>
                   <Table.Th>Correo</Table.Th>
                   <Table.Th>Inasistencias</Table.Th>
-                  {canManage ? <Table.Th w={80} /> : null}
+                  <Table.Th w={100} />
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -128,23 +133,34 @@ export default function ClientesPage() {
                         </Tooltip>
                       </Group>
                     </Table.Td>
-                    <Table.Td>{customer.phone ?? '—'}</Table.Td>
-                    <Table.Td>{customer.email ?? '—'}</Table.Td>
+                    <Table.Td>{customer.phone ?? "—"}</Table.Td>
+                    <Table.Td>{customer.email ?? "—"}</Table.Td>
                     <Table.Td>{customer.noShowCount}</Table.Td>
-                    {canManage ? (
-                      <Table.Td>
-                        <ActionIcon
-                          variant="subtle"
-                          onClick={() => {
-                            setEditing(customer);
-                            open();
-                          }}
-                          aria-label="Editar cliente"
-                        >
-                          <Pencil size={16} />
-                        </ActionIcon>
-                      </Table.Td>
-                    ) : null}
+                    <Table.Td>
+                      <Group gap={4}>
+                        <Tooltip label="Historial de reservas">
+                          <ActionIcon
+                            variant="subtle"
+                            onClick={() => setHistoryCustomer(customer)}
+                            aria-label="Historial"
+                          >
+                            <CalendarDays size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                        {canManage ? (
+                          <ActionIcon
+                            variant="subtle"
+                            onClick={() => {
+                              setEditing(customer);
+                              open();
+                            }}
+                            aria-label="Editar cliente"
+                          >
+                            <Pencil size={16} />
+                          </ActionIcon>
+                        ) : null}
+                      </Group>
+                    </Table.Td>
                   </Table.Tr>
                 ))}
               </Table.Tbody>
@@ -158,6 +174,27 @@ export default function ClientesPage() {
         onClose={close}
         customer={editing}
         onSaved={() => load(debouncedSearch.trim() || undefined)}
+      />
+
+      <CustomerReservationsModal
+        opened={historyCustomer !== null}
+        onClose={() => setHistoryCustomer(null)}
+        customerId={historyCustomer?.id ?? null}
+        customerName={
+          historyCustomer
+            ? `${historyCustomer.firstName} ${historyCustomer.lastName}`
+            : ""
+        }
+        onSelectReservation={(id) => {
+          setHistoryCustomer(null);
+          setDetailReservationId(id);
+        }}
+      />
+
+      <ReservationDetailModal
+        opened={detailReservationId !== null}
+        onClose={() => setDetailReservationId(null)}
+        reservationId={detailReservationId}
       />
     </Stack>
   );

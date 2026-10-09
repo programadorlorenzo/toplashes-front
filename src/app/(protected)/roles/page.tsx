@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   ActionIcon,
   Badge,
@@ -15,29 +15,34 @@ import {
   Table,
   Text,
   Tooltip,
-} from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { Pencil, Power, Trash2 } from 'lucide-react';
-import { ActiveBadge } from '@/components/crud/active-badge';
-import { ListPageHeader } from '@/components/crud/list-page-header';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle } from '@/lib/crud-styles';
-import { hasAnyPermission } from '@/lib/permissions';
-import { useAuthStore } from '@/stores/auth-store';
-import type { Permission, Role } from '@/types/api';
-import { RoleFormModal } from './components/role-form-modal';
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { Pencil, Power, Trash2 } from "lucide-react";
+import { ActiveBadge } from "@/components/crud/active-badge";
+import { ListPageHeader } from "@/components/crud/list-page-header";
+import type {
+  PermissionResponseDto,
+  RoleResponseDto,
+} from "@/generated-client";
+import { rolesApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { cardPaperStyle } from "@/lib/crud-styles";
+import { hasAnyPermission } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/auth-store";
+import { RoleFormModal } from "./components/role-form-modal";
 
 export default function RolesPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? []);
-  const canManage = hasAnyPermission(permissions, ['roles.manage']);
+  const canManage = hasAnyPermission(permissions, ["roles.manage"]);
 
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+  const [roles, setRoles] = useState<RoleResponseDto[]>([]);
+  const [allPermissions, setAllPermissions] = useState<PermissionResponseDto[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Role | null>(null);
-  const [toDelete, setToDelete] = useState<Role | null>(null);
+  const [editing, setEditing] = useState<RoleResponseDto | null>(null);
+  const [toDelete, setToDelete] = useState<RoleResponseDto | null>(null);
   const [formOpened, formHandlers] = useDisclosure(false);
   const [deleteOpened, deleteHandlers] = useDisclosure(false);
 
@@ -45,16 +50,16 @@ export default function RolesPage() {
     setLoading(true);
     try {
       const [rolesRes, permsRes] = await Promise.all([
-        api.get<Role[]>('/roles'),
-        api.get<Permission[]>('/roles/permissions'),
+        rolesApi.roleControllerFindAll(),
+        rolesApi.roleControllerFindAllPermissions(),
       ]);
       setRoles(rolesRes.data);
       setAllPermissions(permsRes.data);
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar',
+        title: "Error al cargar",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -65,16 +70,18 @@ export default function RolesPage() {
     void load();
   }, [load]);
 
-  const toggleActive = async (role: Role) => {
+  const toggleActive = async (role: RoleResponseDto) => {
     if (role.isSystem) return;
     try {
-      await api.put(`/roles/${role.id}`, { isActive: !role.isActive });
+      await rolesApi.roleControllerUpdate(role.id, {
+        isActive: !role.isActive,
+      });
       void load();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   };
@@ -82,20 +89,20 @@ export default function RolesPage() {
   const confirmDelete = async () => {
     if (!toDelete) return;
     try {
-      await api.delete(`/roles/${toDelete.id}`);
+      await rolesApi.roleControllerRemove(toDelete.id);
       notifications.show({
-        title: 'Rol eliminado',
+        title: "Rol eliminado",
         message: toDelete.name,
-        color: 'green',
+        color: "green",
       });
       deleteHandlers.close();
       setToDelete(null);
       void load();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   };
@@ -150,7 +157,7 @@ export default function RolesPage() {
                         ) : null}
                       </Group>
                     </Table.Td>
-                    <Table.Td>{role.description ?? '—'}</Table.Td>
+                    <Table.Td>{role.description ?? "—"}</Table.Td>
                     <Table.Td>
                       <Badge variant="light">{role.permissions.length}</Badge>
                     </Table.Td>
@@ -174,11 +181,11 @@ export default function RolesPage() {
                           {!role.isSystem ? (
                             <>
                               <Tooltip
-                                label={role.isActive ? 'Desactivar' : 'Activar'}
+                                label={role.isActive ? "Desactivar" : "Activar"}
                               >
                                 <ActionIcon
                                   variant="subtle"
-                                  color={role.isActive ? 'orange' : 'green'}
+                                  color={role.isActive ? "orange" : "green"}
                                   onClick={() => void toggleActive(role)}
                                 >
                                   <Power size={16} />

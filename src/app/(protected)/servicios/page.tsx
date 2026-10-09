@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Accordion,
   ActionIcon,
+  Badge,
   Button,
   Center,
   Group,
@@ -14,33 +15,38 @@ import {
   Table,
   Text,
   Tooltip,
-} from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { Pencil, Power, Plus } from 'lucide-react';
-import { ActiveBadge } from '@/components/crud/active-badge';
-import { ListPageHeader } from '@/components/crud/list-page-header';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle } from '@/lib/crud-styles';
-import { formatSoles } from '@/lib/format';
-import { hasAnyPermission } from '@/lib/permissions';
-import { useAuthStore } from '@/stores/auth-store';
-import type { Service, ServiceCategory } from '@/types/api';
-import { CategoryFormModal } from './components/category-form-modal';
-import { ServiceFormModal } from './components/service-form-modal';
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { Pencil, Power, Plus } from "lucide-react";
+import { ActiveBadge } from "@/components/crud/active-badge";
+import { ListPageHeader } from "@/components/crud/list-page-header";
+import type {
+  ServiceCategoryResponseDto,
+  ServiceResponseDto,
+} from "@/generated-client";
+import { categoriasApi, serviciosApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { cardPaperStyle } from "@/lib/crud-styles";
+import { formatSoles } from "@/lib/format";
+import { hasAnyPermission } from "@/lib/permissions";
+import { useAuthStore } from "@/stores/auth-store";
+import { CategoryFormModal } from "./components/category-form-modal";
+import { ServiceFormModal } from "./components/service-form-modal";
 
 export default function ServiciosPage() {
   const permissions = useAuthStore((s) => s.user?.permissions ?? []);
-  const canManage = hasAnyPermission(permissions, ['services.manage']);
+  const canManage = hasAnyPermission(permissions, ["services.manage"]);
 
-  const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [serviceEditing, setServiceEditing] = useState<Service | null>(null);
-  const [categoryEditing, setCategoryEditing] = useState<ServiceCategory | null>(
-    null,
+  const [services, setServices] = useState<ServiceResponseDto[]>([]);
+  const [categories, setCategories] = useState<ServiceCategoryResponseDto[]>(
+    [],
   );
+  const [loading, setLoading] = useState(true);
+  const [serviceEditing, setServiceEditing] =
+    useState<ServiceResponseDto | null>(null);
+  const [categoryEditing, setCategoryEditing] =
+    useState<ServiceCategoryResponseDto | null>(null);
   const [serviceModal, serviceModalHandlers] = useDisclosure(false);
   const [categoryModal, categoryModalHandlers] = useDisclosure(false);
 
@@ -53,16 +59,16 @@ export default function ServiciosPage() {
     setLoading(true);
     try {
       const [svc, cats] = await Promise.all([
-        api.get<Service[]>('/services'),
-        api.get<ServiceCategory[]>('/service-categories'),
+        serviciosApi.serviceControllerFindAll(),
+        categoriasApi.serviceCategoryControllerFindAll(),
       ]);
       setServices(svc.data);
       setCategories(cats.data);
     } catch (error) {
       notifications.show({
-        title: 'Error al cargar',
+        title: "Error al cargar",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -73,32 +79,32 @@ export default function ServiciosPage() {
     void load();
   }, [load]);
 
-  const toggleService = async (service: Service) => {
+  const toggleService = async (service: ServiceResponseDto) => {
     try {
-      await api.put(`/services/${service.id}`, {
+      await serviciosApi.serviceControllerUpdate(service.id, {
         isActive: !service.isActive,
       });
       void load();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   };
 
-  const toggleCategory = async (category: ServiceCategory) => {
+  const toggleCategory = async (category: ServiceCategoryResponseDto) => {
     try {
-      await api.put(`/service-categories/${category.id}`, {
+      await categoriasApi.serviceCategoryControllerUpdate(category.id, {
         isActive: !category.isActive,
       });
       void load();
     } catch (error) {
       notifications.show({
-        title: 'Error',
+        title: "Error",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     }
   };
@@ -135,7 +141,9 @@ export default function ServiciosPage() {
 
       <Accordion variant="contained" radius="md">
         <Accordion.Item value="categories">
-          <Accordion.Control>Categorías ({categories.length})</Accordion.Control>
+          <Accordion.Control>
+            Categorías ({categories.length})
+          </Accordion.Control>
           <Accordion.Panel>
             {categories.length === 0 ? (
               <Text c="dimmed" size="sm">
@@ -163,7 +171,7 @@ export default function ServiciosPage() {
                         </ActionIcon>
                         <ActionIcon
                           variant="subtle"
-                          color={cat.isActive ? 'orange' : 'green'}
+                          color={cat.isActive ? "orange" : "green"}
                           onClick={() => void toggleCategory(cat)}
                           aria-label="Estado categoría"
                         >
@@ -177,7 +185,7 @@ export default function ServiciosPage() {
                   <Text
                     size="sm"
                     c="dimmed"
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: "pointer" }}
                     onClick={() => {
                       setCategoryEditing(null);
                       categoryModalHandlers.open();
@@ -210,6 +218,7 @@ export default function ServiciosPage() {
                   <Table.Th>Categoría</Table.Th>
                   <Table.Th>Precio</Table.Th>
                   <Table.Th>Duración</Table.Th>
+                  <Table.Th>Simultáneo</Table.Th>
                   <Table.Th>Estado</Table.Th>
                   {canManage ? <Table.Th w={100} /> : null}
                 </Table.Tr>
@@ -219,10 +228,21 @@ export default function ServiciosPage() {
                   <Table.Tr key={svc.id}>
                     <Table.Td fw={500}>{svc.name}</Table.Td>
                     <Table.Td>
-                      {categoryMap.get(svc.categoryId) ?? '—'}
+                      {categoryMap.get(svc.categoryId) ?? "—"}
                     </Table.Td>
                     <Table.Td>{formatSoles(svc.price)}</Table.Td>
                     <Table.Td>{svc.duration} min</Table.Td>
+                    <Table.Td>
+                      {svc.allowConcurrent ? (
+                        <Badge size="xs" variant="light" color="teal">
+                          Sí
+                        </Badge>
+                      ) : (
+                        <Text size="xs" c="dimmed">
+                          No
+                        </Text>
+                      )}
+                    </Table.Td>
                     <Table.Td>
                       <ActiveBadge active={svc.isActive} />
                     </Table.Td>
@@ -240,10 +260,12 @@ export default function ServiciosPage() {
                               <Pencil size={16} />
                             </ActionIcon>
                           </Tooltip>
-                          <Tooltip label={svc.isActive ? 'Desactivar' : 'Activar'}>
+                          <Tooltip
+                            label={svc.isActive ? "Desactivar" : "Activar"}
+                          >
                             <ActionIcon
                               variant="subtle"
-                              color={svc.isActive ? 'orange' : 'green'}
+                              color={svc.isActive ? "orange" : "green"}
                               onClick={() => void toggleService(svc)}
                             >
                               <Power size={16} />

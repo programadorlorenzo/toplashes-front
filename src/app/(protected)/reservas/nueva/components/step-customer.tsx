@@ -1,27 +1,40 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
+  ActionIcon,
+  Badge,
   Button,
+  Divider,
   Group,
   Paper,
-  Radio,
+  ScrollArea,
   Stack,
   Text,
   TextInput,
-} from '@mantine/core';
-import { useDebouncedValue } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
-import { Search } from 'lucide-react';
-import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/api-error';
-import { cardPaperStyle, primaryButtonStyles } from '@/lib/crud-styles';
-import { chain, maxLength, requerido, telefono } from '@/lib/validations';
-import type { Customer } from '@/types/api';
+  Tooltip,
+} from "@mantine/core";
+import { useDebouncedValue } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import {
+  CalendarDays,
+  Check,
+  Search,
+  UserPlus,
+  UserSearch,
+  X,
+} from "lucide-react";
+import { CustomerReservationsModal } from "@/components/customer-reservations-modal";
+import { ReservationDetailModal } from "@/components/reservation-detail-modal";
+import { CreateCustomerForm } from "./create-customer-form";
+import type { CustomerResponseDto } from "@/generated-client";
+import { clientesApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { primaryButtonStyles } from "@/lib/crud-styles";
 
 interface StepCustomerProps {
   selectedCustomerId: number | null;
-  onSelectCustomer: (customer: Customer) => void;
+  onSelectCustomer: (customer: CustomerResponseDto | null) => void;
   onContinue: () => void;
 }
 
@@ -30,18 +43,16 @@ export function StepCustomer({
   onSelectCustomer,
   onContinue,
 }: StepCustomerProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [debounced] = useDebouncedValue(search, 350);
-  const [results, setResults] = useState<Customer[]>([]);
+  const [results, setResults] = useState<CustomerResponseDto[]>([]);
+  const [selected, setSelected] = useState<CustomerResponseDto | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'search' | 'create'>('search');
-  const [creating, setCreating] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({
-    firstName: '',
-    lastName: '',
-    whatsapp: '',
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [mode, setMode] = useState<"search" | "create">("search");
+  const [historyCust, setHistoryCust] = useState<CustomerResponseDto | null>(
+    null,
+  );
+  const [detailId, setDetailId] = useState<number | null>(null);
 
   const loadSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -50,15 +61,15 @@ export function StepCustomer({
     }
     setLoading(true);
     try {
-      const { data } = await api.get<Customer[]>('/customers', {
-        params: { search: query.trim() },
-      });
+      const { data } = await clientesApi.customerControllerFindAll(
+        query.trim(),
+      );
       setResults(data);
     } catch (error) {
       notifications.show({
-        title: 'Error en búsqueda',
+        title: "Error en búsqueda",
         message: getApiErrorMessage(error),
-        color: 'red',
+        color: "red",
       });
     } finally {
       setLoading(false);
@@ -69,110 +80,173 @@ export function StepCustomer({
     void loadSearch(debounced);
   }, [debounced, loadSearch]);
 
-  const validateNew = () => {
-    const next: Record<string, string> = {};
-    const first = chain(requerido('Nombres'), maxLength('Nombres', 80))(
-      newCustomer.firstName,
-    );
-    const last = chain(requerido('Apellidos'), maxLength('Apellidos', 80))(
-      newCustomer.lastName,
-    );
-    const wa = telefono(newCustomer.whatsapp);
-    if (first) next.firstName = first;
-    if (last) next.lastName = last;
-    if (wa) next.whatsapp = wa;
-    setErrors(next);
-    return Object.keys(next).length === 0;
+  const pick = (customer: CustomerResponseDto) => {
+    setSelected(customer);
+    onSelectCustomer(customer);
   };
-
-  const handleCreate = async () => {
-    if (!validateNew()) return;
-    setCreating(true);
-    try {
-      const { data } = await api.post<Customer>('/customers', {
-        firstName: newCustomer.firstName.trim(),
-        lastName: newCustomer.lastName.trim(),
-        whatsapp: newCustomer.whatsapp.trim(),
-      });
-      onSelectCustomer(data);
-      notifications.show({
-        title: 'Cliente creado',
-        color: 'green',
-        message: `${data.firstName} ${data.lastName}`,
-      });
-      onContinue();
-    } catch (error) {
-      notifications.show({
-        title: 'No se pudo crear',
-        message: getApiErrorMessage(error),
-        color: 'red',
-      });
-    } finally {
-      setCreating(false);
-    }
+  const clear = () => {
+    setSelected(null);
+    onSelectCustomer(null);
   };
 
   return (
     <Stack gap="md">
-      <Radio.Group
-        value={mode}
-        onChange={(value) => setMode(value as 'search' | 'create')}
-        label="Cliente"
-      >
-        <Group mt="xs">
-          <Radio value="search" label="Buscar existente" />
-          <Radio value="create" label="Crear nueva clienta" />
-        </Group>
-      </Radio.Group>
+      {/* Banner de clienta seleccionada */}
+      {selectedCustomerId && selected ? (
+        <Paper
+          p="sm"
+          radius="md"
+          withBorder
+          style={{
+            borderColor: "hsl(var(--tl-taupe))",
+            backgroundColor: "hsl(var(--tl-cream) / 0.5)",
+          }}
+        >
+          <Group justify="space-between" wrap="nowrap">
+            <Group gap="sm" wrap="nowrap">
+              <Badge color="green" variant="light" circle size="lg">
+                <Check size={14} />
+              </Badge>
+              <Stack gap={0}>
+                <Text size="sm" fw={600}>
+                  {selected.firstName} {selected.lastName}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {selected.whatsapp}
+                </Text>
+              </Stack>
+            </Group>
+            <Group gap="xs">
+              <Tooltip label="Historial">
+                <ActionIcon
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => setHistoryCust(selected)}
+                >
+                  <CalendarDays size={14} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Cambiar">
+                <ActionIcon
+                  variant="subtle"
+                  size="sm"
+                  color="red"
+                  onClick={clear}
+                >
+                  <X size={14} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          </Group>
+        </Paper>
+      ) : null}
 
-      {mode === 'search' ? (
+      {/* Toggle buscar / crear */}
+      <Group gap="xs">
+        <Button
+          variant={mode === "search" ? "filled" : "light"}
+          size="xs"
+          leftSection={<UserSearch size={14} />}
+          styles={mode === "search" ? primaryButtonStyles : undefined}
+          onClick={() => setMode("search")}
+        >
+          Buscar existente
+        </Button>
+        <Button
+          variant={mode === "create" ? "filled" : "light"}
+          size="xs"
+          leftSection={<UserPlus size={14} />}
+          styles={mode === "create" ? primaryButtonStyles : undefined}
+          onClick={() => setMode("create")}
+        >
+          Crear nueva
+        </Button>
+      </Group>
+
+      {mode === "search" ? (
         <>
           <TextInput
-            placeholder="Nombre o WhatsApp…"
+            placeholder="Buscar por nombre o WhatsApp…"
             leftSection={<Search size={16} />}
             value={search}
             onChange={(e) => setSearch(e.currentTarget.value)}
+            autoFocus
           />
-          <Stack gap="xs">
-            {loading ? (
-              <Text size="sm" c="dimmed">
-                Buscando…
-              </Text>
-            ) : null}
-            {results.map((customer) => (
-              <Paper
-                key={customer.id}
-                withBorder
-                p="sm"
-                radius="md"
-                style={{
-                  ...cardPaperStyle,
-                  outline:
-                    selectedCustomerId === customer.id
-                      ? '2px solid hsl(var(--tl-taupe))'
-                      : undefined,
-                  cursor: 'pointer',
-                }}
-                onClick={() => onSelectCustomer(customer)}
-              >
-                <Text fw={500}>
-                  {customer.firstName} {customer.lastName}
-                </Text>
-                <Text size="sm" c="dimmed">
-                  {customer.whatsapp}
-                </Text>
-              </Paper>
-            ))}
-            {!loading && debounced && results.length === 0 ? (
-              <Text size="sm" c="dimmed">
-                Sin resultados. Puedes crear una clienta nueva.
-              </Text>
-            ) : null}
-          </Stack>
+          {loading ? (
+            <Text size="sm" c="dimmed">
+              Buscando…
+            </Text>
+          ) : null}
+          {results.length > 0 ? (
+            <ScrollArea.Autosize mah={280} type="auto">
+              <Stack gap={6}>
+                {results.map((c) => {
+                  const active = selectedCustomerId === c.id;
+                  return (
+                    <Paper
+                      key={c.id}
+                      withBorder
+                      px="sm"
+                      py="xs"
+                      radius="sm"
+                      onClick={() => pick(c)}
+                      style={{
+                        cursor: "pointer",
+                        borderColor: active
+                          ? "hsl(var(--tl-taupe))"
+                          : undefined,
+                        backgroundColor: active
+                          ? "hsl(var(--tl-cream) / 0.4)"
+                          : undefined,
+                      }}
+                    >
+                      <Group justify="space-between" wrap="nowrap">
+                        <Group gap="sm" wrap="nowrap">
+                          {active ? (
+                            <Check
+                              size={14}
+                              style={{ color: "hsl(var(--tl-taupe))" }}
+                            />
+                          ) : null}
+                          <Stack gap={0}>
+                            <Text size="sm" fw={500}>
+                              {c.firstName} {c.lastName}
+                            </Text>
+                            <Text size="xs" c="dimmed">
+                              {c.whatsapp}
+                            </Text>
+                          </Stack>
+                        </Group>
+                        <Tooltip label="Historial">
+                          <ActionIcon
+                            variant="subtle"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHistoryCust(c);
+                            }}
+                          >
+                            <CalendarDays size={14} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
+                    </Paper>
+                  );
+                })}
+              </Stack>
+            </ScrollArea.Autosize>
+          ) : null}
+          {!loading && debounced && results.length === 0 ? (
+            <Text size="sm" c="dimmed" ta="center" py="sm">
+              Sin resultados. Puedes crear una clienta nueva.
+            </Text>
+          ) : null}
+          <Divider />
           <Group justify="flex-end">
             <Button
               styles={primaryButtonStyles}
               disabled={!selectedCustomerId}
+              size="md"
               onClick={onContinue}
             >
               Continuar
@@ -180,42 +254,31 @@ export function StepCustomer({
           </Group>
         </>
       ) : (
-        <>
-          <TextInput
-            label="Nombres"
-            value={newCustomer.firstName}
-            error={errors.firstName}
-            onChange={(e) =>
-              setNewCustomer((c) => ({ ...c, firstName: e.currentTarget.value }))
-            }
-          />
-          <TextInput
-            label="Apellidos"
-            value={newCustomer.lastName}
-            error={errors.lastName}
-            onChange={(e) =>
-              setNewCustomer((c) => ({ ...c, lastName: e.currentTarget.value }))
-            }
-          />
-          <TextInput
-            label="WhatsApp"
-            value={newCustomer.whatsapp}
-            error={errors.whatsapp}
-            onChange={(e) =>
-              setNewCustomer((c) => ({ ...c, whatsapp: e.currentTarget.value }))
-            }
-          />
-          <Group justify="flex-end">
-            <Button
-              styles={primaryButtonStyles}
-              loading={creating}
-              onClick={() => void handleCreate()}
-            >
-              Crear y continuar
-            </Button>
-          </Group>
-        </>
+        <CreateCustomerForm
+          onCreated={(c) => {
+            pick(c);
+            onContinue();
+          }}
+        />
       )}
+
+      <CustomerReservationsModal
+        opened={historyCust !== null}
+        onClose={() => setHistoryCust(null)}
+        customerId={historyCust?.id ?? null}
+        customerName={
+          historyCust ? `${historyCust.firstName} ${historyCust.lastName}` : ""
+        }
+        onSelectReservation={(id) => {
+          setHistoryCust(null);
+          setDetailId(id);
+        }}
+      />
+      <ReservationDetailModal
+        opened={detailId !== null}
+        onClose={() => setDetailId(null)}
+        reservationId={detailId}
+      />
     </Stack>
   );
 }
