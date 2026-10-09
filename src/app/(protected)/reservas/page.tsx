@@ -179,6 +179,7 @@ export default function ReservasPage() {
                       prefilledTime: startTime,
                     })
                   }
+                  onSynced={() => void dashboard.reload()}
                 />
               </Grid.Col>
             ))}
@@ -190,6 +191,7 @@ export default function ReservasPage() {
             onNewReservation={() =>
               setQuickTarget({ employeeId: null, employeeName: "Cola" })
             }
+            onSynced={() => void dashboard.reload()}
           />
         </DndContext>
       )}

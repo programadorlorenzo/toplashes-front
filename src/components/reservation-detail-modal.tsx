@@ -22,6 +22,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import {
   Calendar,
+  CalendarCheck,
+  CalendarSync,
   CheckCircle,
   Clock,
   CreditCard,
@@ -85,6 +87,7 @@ export function ReservationDetailModal({
 
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [reservation, setReservation] = useState<ReservationResponseDto | null>(
     null,
   );
@@ -193,6 +196,39 @@ export function ReservationDetailModal({
     }
   };
 
+  const handleSyncCalendar = async () => {
+    if (!reservation) return;
+    setSyncing(true);
+    try {
+      const { data } = await reservasApi.reservationControllerSyncCalendar(
+        reservation.id,
+      );
+      if (data.synced) {
+        notifications.show({
+          title: "Sincronizado",
+          message: "Reserva sincronizada con Google Calendar.",
+          color: "green",
+        });
+      } else {
+        notifications.show({
+          title: "No sincronizado",
+          message:
+            "No hay cuenta de Google Calendar conectada para este local.",
+          color: "orange",
+        });
+      }
+      await load();
+    } catch (error) {
+      notifications.show({
+        title: "Error de sincronización",
+        message: getApiErrorMessage(error),
+        color: "red",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const transitions = reservation
     ? getAllowedStatusTransitions(reservation.status).filter(
         (status) =>
@@ -281,6 +317,17 @@ export function ReservationDetailModal({
                   >
                     {RESERVATION_STATUS_LABELS[reservation.status]}
                   </Badge>
+                  {reservation.googleCalendarEventId ? (
+                    <Badge
+                      color="teal"
+                      size="lg"
+                      variant="light"
+                      radius="sm"
+                      leftSection={<CalendarCheck size={12} />}
+                    >
+                      Calendar
+                    </Badge>
+                  ) : null}
                   {isPaid ? (
                     <Badge color="green" size="lg" variant="filled" radius="sm">
                       Pagado
@@ -545,6 +592,20 @@ export function ReservationDetailModal({
                     onClick={() => void handleStatus(revertTo)}
                   >
                     Revertir a {RESERVATION_STATUS_LABELS[revertTo]}
+                  </Button>
+                ) : null}
+                {canUpdate ? (
+                  <Button
+                    variant="subtle"
+                    size="xs"
+                    color={reservation.googleCalendarEventId ? "teal" : "gray"}
+                    leftSection={<CalendarSync size={14} />}
+                    loading={syncing}
+                    onClick={() => void handleSyncCalendar()}
+                  >
+                    {reservation.googleCalendarEventId
+                      ? "Resincronizar"
+                      : "Sincronizar Calendar"}
                   </Button>
                 ) : null}
                 <div style={{ flex: 1 }} />

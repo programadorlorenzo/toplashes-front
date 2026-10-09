@@ -2,10 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { Badge, Group, Paper, Stack, Text } from "@mantine/core";
-import { Timer } from "lucide-react";
+import {
+  ActionIcon,
+  Badge,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Tooltip,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { CalendarCheck, CalendarSync, Timer } from "lucide-react";
 import { DateTime } from "luxon";
 import type { ReservationResponseDtoStatusEnum } from "@/generated-client";
+import { reservasApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { formatTime } from "@/lib/date-utils";
 import {
   RESERVATION_STATUS_BG,
@@ -17,6 +28,7 @@ import type { BookingItem } from "./use-reservas-dashboard";
 interface BookingCardProps {
   item: BookingItem;
   onClick: (reservationId: number) => void;
+  onSynced?: () => void;
   compact?: boolean;
 }
 
@@ -49,7 +61,13 @@ function ElapsedTimer({ since }: { since: string }) {
   );
 }
 
-export function BookingCard({ item, onClick, compact }: BookingCardProps) {
+export function BookingCard({
+  item,
+  onClick,
+  onSynced,
+  compact,
+}: BookingCardProps) {
+  const [syncing, setSyncing] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: `booking-${item.lineId}`, data: item });
 
@@ -63,6 +81,32 @@ export function BookingCard({ item, onClick, compact }: BookingCardProps) {
         opacity: 0.85,
       }
     : undefined;
+
+  const handleSync = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSyncing(true);
+    try {
+      const { data } = await reservasApi.reservationControllerSyncCalendar(
+        item.reservationId,
+      );
+      notifications.show({
+        title: data.synced ? "Sincronizado" : "Sin conexión",
+        message: data.synced
+          ? "Reserva enviada a Google Calendar."
+          : "No hay cuenta de Calendar conectada.",
+        color: data.synced ? "green" : "orange",
+      });
+      onSynced?.();
+    } catch (error) {
+      notifications.show({
+        title: "Error",
+        message: getApiErrorMessage(error),
+        color: "red",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   return (
     <Paper
@@ -82,9 +126,32 @@ export function BookingCard({ item, onClick, compact }: BookingCardProps) {
       onClick={() => onClick(item.reservationId)}
     >
       <Stack gap={2} style={{ minWidth: 0 }}>
-        <Text size="sm" fw={700} truncate>
-          {item.customerName}
-        </Text>
+        <Group gap={4} justify="space-between" wrap="nowrap">
+          <Text size="sm" fw={700} truncate style={{ flex: 1 }}>
+            {item.customerName}
+          </Text>
+          <Tooltip
+            label={
+              item.hasCalendarEvent ? "En Calendar ✓" : "Sincronizar Calendar"
+            }
+            withArrow
+            position="top"
+          >
+            <ActionIcon
+              size="xs"
+              variant="subtle"
+              color={item.hasCalendarEvent ? "teal" : "gray"}
+              loading={syncing}
+              onClick={(e) => void handleSync(e)}
+            >
+              {item.hasCalendarEvent ? (
+                <CalendarCheck size={13} />
+              ) : (
+                <CalendarSync size={13} />
+              )}
+            </ActionIcon>
+          </Tooltip>
+        </Group>
         <Group gap={6} justify="space-between" wrap="nowrap">
           <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
             <Text size="xs" c="dimmed">

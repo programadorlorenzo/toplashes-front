@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **firstName** | **string** |  | [default to undefined]
 **lastName** | **string** |  | [default to undefined]
 **phone** | **string** |  | [optional] [default to undefined]
+**color** | **string** | Color hexadecimal | [optional] [default to undefined]
 **isActive** | **boolean** |  | [default to undefined]
 **userId** | **number** |  | [optional] [default to undefined]
 **branchIds** | **Array&lt;number&gt;** | Sucursales asignadas | [default to undefined]
@@ -26,6 +27,7 @@ const instance: EmployeeResponseDto = {
     firstName,
     lastName,
     phone,
+    color,
     isActive,
     userId,
     branchIds,

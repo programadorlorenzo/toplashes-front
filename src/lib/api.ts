@@ -7,6 +7,7 @@ import {
   ColaboradorasApi,
   DashboardApi,
   DisponibilidadApi,
+  GoogleCalendarApi,
   HorariosApi,
   PagosApi,
   ReservasApi,
@@ -93,3 +94,4 @@ export const rolesApi = new RolesYPermisosApi(config, undefined, api);
 export const serviciosApi = new ServiciosApi(config, undefined, api);
 export const sucursalesApi = new SucursalesApi(config, undefined, api);
 export const usuariosApi = new UsuariosApi(config, undefined, api);
+export const googleCalendarApi = new GoogleCalendarApi(config, undefined, api);

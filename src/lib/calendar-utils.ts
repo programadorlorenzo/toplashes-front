@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 const ZONE = "America/Lima";
 
 export const CALENDAR_SLOT_MINUTES = 30;
-export const CALENDAR_SLOT_HEIGHT_PX = 44;
+export const CALENDAR_SLOT_HEIGHT_PX = 32;
 
 export function parseTimeToMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);

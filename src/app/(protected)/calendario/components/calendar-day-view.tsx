@@ -1,23 +1,21 @@
 "use client";
 
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Box, Group, ScrollArea, Text } from "@mantine/core";
 import {
   CALENDAR_SLOT_HEIGHT_PX,
   CALENDAR_SLOT_MINUTES,
-  durationMinutesBetween,
   generateTimeSlots,
-  minutesFromOpenOnDate,
+  minutesToTimeLabel,
+  parseTimeToMinutes,
 } from "@/lib/calendar-utils";
 import type {
   EmployeeResponseDto,
   ReservationResponseDto,
   ServiceResponseDto,
 } from "@/generated-client";
-import {
-  ReservationBlock,
-  type ReservationBlockData,
-} from "./reservation-block";
-import { TimeSlot } from "./time-slot";
+import { ReservationBlock } from "./reservation-block";
+import { assignOverlapColumns, buildBlocks } from "./calendar-block-utils";
 
 interface CalendarDayViewProps {
   date: string;
@@ -29,46 +27,11 @@ interface CalendarDayViewProps {
   servicesById: Record<number, ServiceResponseDto>;
   onEmptySlotClick: (employeeId: number, time: string) => void;
   onReservationClick: (reservationId: number) => void;
-}
-
-function buildBlocks(
-  date: string,
-  openTime: string,
-  reservations: ReservationResponseDto[],
-  customerNames: Record<number, string>,
-  servicesById: Record<number, ServiceResponseDto>,
-): ReservationBlockData[] {
-  const blocks: ReservationBlockData[] = [];
-
-  for (const reservation of reservations) {
-    const customerName =
-      customerNames[reservation.customerId] ??
-      `Cliente #${reservation.customerId}`;
-
-    for (const line of reservation.services) {
-      const service = servicesById[line.serviceId];
-      const topMinutes = minutesFromOpenOnDate(openTime, line.startTime);
-      const duration = durationMinutesBetween(line.startTime, line.endTime);
-      blocks.push({
-        reservationId: reservation.id,
-        reservationServiceId: line.id,
-        employeeId: line.employeeId,
-        customerName,
-        serviceLabel: service?.name ?? `Servicio #${line.serviceId}`,
-        status: reservation.status,
-        startTime: line.startTime,
-        endTime: line.endTime,
-        topPx: (topMinutes / CALENDAR_SLOT_MINUTES) * CALENDAR_SLOT_HEIGHT_PX,
-        heightPx: Math.max(
-          (duration / CALENDAR_SLOT_MINUTES) * CALENDAR_SLOT_HEIGHT_PX - 2,
-          CALENDAR_SLOT_HEIGHT_PX - 4,
-        ),
-      });
-    }
-  }
-
-  void date;
-  return blocks;
+  onDragCreate?: (
+    employeeId: number,
+    startTime: string,
+    endTime: string,
+  ) => void;
 }
 
 export function CalendarDayView({
@@ -81,33 +44,96 @@ export function CalendarDayView({
   servicesById,
   onEmptySlotClick,
   onReservationClick,
+  onDragCreate,
 }: CalendarDayViewProps) {
   const slots = generateTimeSlots(openTime, closeTime);
-  const blocks = buildBlocks(
+  const employeeColors = useMemo(
+    () =>
+      Object.fromEntries(
+        employees.filter((e) => e.color).map((e) => [e.id, e.color!]),
+      ) as Record<number, string>,
+    [employees],
+  );
+  const allBlocks = buildBlocks(
     date,
     openTime,
     reservations,
     customerNames,
     servicesById,
+    employeeColors,
   );
   const gridHeight = slots.length * CALENDAR_SLOT_HEIGHT_PX;
 
+  const [dragState, setDragState] = useState<{
+    empId: number;
+    startIdx: number;
+    endIdx: number;
+  } | null>(null);
+  const isDragging = useRef(false);
+
+  const handleMouseDown = useCallback((empId: number, slotIdx: number) => {
+    isDragging.current = true;
+    setDragState({ empId, startIdx: slotIdx, endIdx: slotIdx });
+  }, []);
+
+  const handleMouseEnter = useCallback(
+    (empId: number, slotIdx: number) => {
+      if (!isDragging.current || !dragState || dragState.empId !== empId)
+        return;
+      setDragState((prev) => (prev ? { ...prev, endIdx: slotIdx } : null));
+    },
+    [dragState],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (!isDragging.current || !dragState) {
+      isDragging.current = false;
+      setDragState(null);
+      return;
+    }
+    isDragging.current = false;
+    const lo = Math.min(dragState.startIdx, dragState.endIdx);
+    const hi = Math.max(dragState.startIdx, dragState.endIdx);
+    const openMinutes = parseTimeToMinutes(openTime);
+    const startTime = minutesToTimeLabel(
+      openMinutes + lo * CALENDAR_SLOT_MINUTES,
+    );
+    const endTime = minutesToTimeLabel(
+      openMinutes + (hi + 1) * CALENDAR_SLOT_MINUTES,
+    );
+    setDragState(null);
+    if (onDragCreate) {
+      onDragCreate(dragState.empId, startTime, endTime);
+    } else {
+      onEmptySlotClick(dragState.empId, startTime);
+    }
+  }, [dragState, onDragCreate, onEmptySlotClick, openTime]);
+
   return (
     <ScrollArea type="auto" offsetScrollbars>
-      <Box miw={Math.max(employees.length * 180, 640)}>
+      <Box
+        miw={Math.max(employees.length * 160, 600)}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => {
+          if (isDragging.current) handleMouseUp();
+        }}
+        style={{ userSelect: "none" }}
+      >
         <Group gap={0} wrap="nowrap" align="flex-start">
-          <Box w={56} style={{ flexShrink: 0 }}>
-            <Box h={40} />
+          <Box w={44} style={{ flexShrink: 0 }}>
+            <Box h={30} />
             {slots.map((slot) => (
               <Box
                 key={slot}
                 h={CALENDAR_SLOT_HEIGHT_PX}
-                style={{
-                  borderBottom: "1px solid hsl(var(--border))",
-                  paddingRight: 8,
-                }}
+                style={{ paddingRight: 4 }}
               >
-                <Text size="xs" c="dimmed" ta="right" pt={2}>
+                <Text
+                  size="9px"
+                  c="dimmed"
+                  ta="right"
+                  style={{ lineHeight: 1 }}
+                >
                   {slot.endsWith(":00") ? slot : ""}
                 </Text>
               </Box>
@@ -115,44 +141,78 @@ export function CalendarDayView({
           </Box>
 
           {employees.map((employee) => {
-            const employeeBlocks = blocks.filter(
+            const empBlocks = allBlocks.filter(
               (b) => b.employeeId === employee.id,
             );
+            const laidOut = assignOverlapColumns(empBlocks);
+            const empColor = employee.color ?? "#8B7355";
 
             return (
               <Box
                 key={employee.id}
                 style={{
-                  flex: "1 1 180px",
-                  minWidth: 160,
-                  borderLeft: "1px solid hsl(var(--border))",
+                  flex: "1 1 140px",
+                  minWidth: 120,
+                  borderLeft: "1px solid var(--mantine-color-gray-3)",
                 }}
               >
                 <Box
-                  h={40}
-                  px="xs"
+                  h={30}
+                  px={6}
                   style={{
-                    borderBottom: "1px solid hsl(var(--border))",
-                    backgroundColor: "hsl(var(--muted))",
+                    borderBottom: "1px solid var(--mantine-color-gray-3)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    backgroundColor: "var(--mantine-color-gray-0)",
                   }}
                 >
-                  <Text size="sm" fw={600} lineClamp={1}>
-                    {employee.firstName} {employee.lastName}
+                  <Box
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      backgroundColor: empColor,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Text size="xs" fw={600} lineClamp={1}>
+                    {employee.firstName}
                   </Text>
                 </Box>
 
                 <Box pos="relative" h={gridHeight}>
-                  {slots.map((slot) => (
-                    <TimeSlot
-                      key={slot}
-                      label={slot}
-                      heightPx={CALENDAR_SLOT_HEIGHT_PX}
-                      isHourMark={slot.endsWith(":00")}
-                      onClick={() => onEmptySlotClick(employee.id, slot)}
-                    />
-                  ))}
+                  {slots.map((slot, idx) => {
+                    const isInDrag =
+                      dragState &&
+                      dragState.empId === employee.id &&
+                      idx >= Math.min(dragState.startIdx, dragState.endIdx) &&
+                      idx <= Math.max(dragState.startIdx, dragState.endIdx);
 
-                  {employeeBlocks.map((block) => (
+                    return (
+                      <Box
+                        key={slot}
+                        h={CALENDAR_SLOT_HEIGHT_PX}
+                        style={{
+                          borderBottom: slot.endsWith(":00")
+                            ? "1px solid var(--mantine-color-gray-3)"
+                            : "1px solid var(--mantine-color-gray-1)",
+                          cursor: "crosshair",
+                          backgroundColor: isInDrag
+                            ? `${empColor}20`
+                            : undefined,
+                          transition: "background-color 80ms",
+                        }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleMouseDown(employee.id, idx);
+                        }}
+                        onMouseEnter={() => handleMouseEnter(employee.id, idx)}
+                      />
+                    );
+                  })}
+
+                  {laidOut.map((block) => (
                     <ReservationBlock
                       key={block.reservationServiceId}
                       block={block}

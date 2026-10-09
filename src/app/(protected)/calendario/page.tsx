@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Alert,
   Center,
@@ -20,6 +19,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CalendarDayView } from "./components/calendar-day-view";
 import { CalendarWeekView } from "./components/calendar-week-view";
 import { ReservationDetailModal } from "@/components/reservation-detail-modal";
+import { QuickReserveModal } from "@/app/(protected)/reservas/components/quick-reserve-modal";
 import type {
   BranchResponseDto,
   EmployeeResponseDto,
@@ -36,7 +36,6 @@ import {
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   addDaysIso,
-  isoTimeOnDate,
   startOfWeekIso,
   weekDayDatesFromMonday,
 } from "@/lib/calendar-utils";
@@ -62,8 +61,13 @@ async function fetchCustomersMap(
   return Object.fromEntries(entries);
 }
 
+interface QuickReserveTarget {
+  employeeId: number | null;
+  employeeName: string;
+  prefilledTime?: string;
+}
+
 export default function CalendarioPage() {
-  const router = useRouter();
   const branches = useBranchStore((s) => s.branches);
   const selectedBranch = useBranchStore((s) => s.selectedBranch);
   const selectBranch = useBranchStore((s) => s.selectBranch);
@@ -84,6 +88,9 @@ export default function CalendarioPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [quickTarget, setQuickTarget] = useState<QuickReserveTarget | null>(
+    null,
+  );
 
   const branchId = selectedBranch?.id;
 
@@ -169,16 +176,28 @@ export default function CalendarioPage() {
   const openTime = branchDetail?.openTime ?? "09:00";
   const closeTime = branchDetail?.closeTime ?? "20:00";
 
+  const getEmployeeName = (empId: number) =>
+    employeeNames[empId] ?? `Colaboradora #${empId}`;
+
   const handleEmptySlot = (employeeId: number, time: string) => {
-    if (!branchId) return;
-    const startTime = isoTimeOnDate(date, time);
-    const params = new URLSearchParams({
-      branchId: String(branchId),
-      date,
-      employeeId: String(employeeId),
-      startTime,
+    setQuickTarget({
+      employeeId,
+      employeeName: getEmployeeName(employeeId),
+      prefilledTime: time,
     });
-    router.push(`/reservas/nueva?${params.toString()}`);
+  };
+
+  const handleDragCreate = (
+    employeeId: number,
+    startTime: string,
+    _endTime: string,
+  ) => {
+    void _endTime;
+    setQuickTarget({
+      employeeId,
+      employeeName: getEmployeeName(employeeId),
+      prefilledTime: startTime,
+    });
   };
 
   const branchOptions = branches.map((b) => ({
@@ -298,6 +317,7 @@ export default function CalendarioPage() {
             servicesById={servicesById}
             onEmptySlotClick={handleEmptySlot}
             onReservationClick={setDetailId}
+            onDragCreate={handleDragCreate}
           />
         ) : (
           <CalendarWeekView
@@ -316,6 +336,21 @@ export default function CalendarioPage() {
         reservationId={detailId}
         onUpdated={() => void loadCalendarData()}
       />
+
+      {branchId && (
+        <QuickReserveModal
+          opened={quickTarget !== null}
+          onClose={() => setQuickTarget(null)}
+          onCreated={() => void loadCalendarData()}
+          branchId={branchId}
+          date={date}
+          employeeId={quickTarget?.employeeId ?? null}
+          employeeName={quickTarget?.employeeName ?? ""}
+          prefilledTime={quickTarget?.prefilledTime}
+          services={services}
+          servicesById={servicesById as Record<number, ServiceResponseDto>}
+        />
+      )}
     </Stack>
   );
 }

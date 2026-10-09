@@ -163,6 +163,10 @@ export interface CreateEmployeeDto {
      */
     'phone'?: string;
     /**
+     * Color hexadecimal de la colaboradora (ej: #FF5733)
+     */
+    'color'?: string;
+    /**
      * Si está activa
      */
     'isActive'?: boolean;
@@ -462,6 +466,10 @@ export interface EmployeeResponseDto {
     'firstName': string;
     'lastName': string;
     'phone'?: string;
+    /**
+     * Color hexadecimal
+     */
+    'color'?: string;
     'isActive': boolean;
     'userId'?: number;
     /**
@@ -480,6 +488,15 @@ export interface FinishServiceLineDto {
      * Notas de la atención
      */
     'notes'?: string;
+}
+export interface GoogleCalendarTokenResponseDto {
+    'id': number;
+    'branchId'?: number;
+    'email': string;
+    'calendarId'?: string;
+    'isActive': boolean;
+    'createdAt': string;
+    'updatedAt': string;
 }
 export interface LoginDto {
     /**
@@ -589,6 +606,10 @@ export interface ReservationResponseDto {
     'createdById': number;
     'totalAmount': string;
     'discount': string;
+    /**
+     * ID del evento en Google Calendar
+     */
+    'googleCalendarEventId'?: string;
     'services': Array<ReservationServiceResponseDto>;
     'statusHistory'?: Array<ReservationStatusHistoryResponseDto>;
     'createdAt': string;
@@ -736,6 +757,12 @@ export interface ServiceResponseDto {
     'createdAt': string;
     'updatedAt': string;
 }
+export interface SyncCalendarResponseDto {
+    /**
+     * Si la sincronización fue exitosa
+     */
+    'synced': boolean;
+}
 export interface TopServiceStatDto {
     'serviceId': number;
     'serviceName': string;
@@ -814,6 +841,10 @@ export interface UpdateEmployeeDto {
      * Teléfono
      */
     'phone'?: string;
+    /**
+     * Color hexadecimal de la colaboradora (ej: #FF5733)
+     */
+    'color'?: string;
     /**
      * Si está activa
      */
@@ -2937,6 +2968,403 @@ export class DisponibilidadApi extends BaseAPI {
 
 
 /**
+ * GoogleCalendarApi - axios parameter creator
+ */
+export const GoogleCalendarApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Callback OAuth de Google
+         * @param {string} code 
+         * @param {string} state 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerCallback: async (code: string, state: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('googleCalendarControllerCallback', 'code', code)
+            // verify required parameter 'state' is not null or undefined
+            assertParamExists('googleCalendarControllerCallback', 'state', state)
+            const localVarPath = `/google-calendar/callback`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (code !== undefined) {
+                localVarQueryParameter['code'] = code;
+            }
+
+            if (state !== undefined) {
+                localVarQueryParameter['state'] = state;
+            }
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Iniciar flujo OAuth con Google Calendar (redirige a Google)
+         * @param {number} [branchId] ID de sucursal (vacío &#x3D; global)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerConnect: async (branchId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/google-calendar/connect`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (branchId !== undefined) {
+                localVarQueryParameter['branchId'] = branchId;
+            }
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Desconectar una cuenta de Google Calendar
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerDisconnect: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('googleCalendarControllerDisconnect', 'id', id)
+            const localVarPath = `/google-calendar/disconnect/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Obtener URL de autorización sin redirigir
+         * @param {number} [branchId] ID de sucursal (vacío &#x3D; global)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerGetAuthUrl: async (branchId?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/google-calendar/auth-url`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (branchId !== undefined) {
+                localVarQueryParameter['branchId'] = branchId;
+            }
+
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Listar conexiones de Google Calendar
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerListTokens: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/google-calendar/tokens`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * GoogleCalendarApi - functional programming interface
+ */
+export const GoogleCalendarApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = GoogleCalendarApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Callback OAuth de Google
+         * @param {string} code 
+         * @param {string} state 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async googleCalendarControllerCallback(code: string, state: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.googleCalendarControllerCallback(code, state, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GoogleCalendarApi.googleCalendarControllerCallback']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Iniciar flujo OAuth con Google Calendar (redirige a Google)
+         * @param {number} [branchId] ID de sucursal (vacío &#x3D; global)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async googleCalendarControllerConnect(branchId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.googleCalendarControllerConnect(branchId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GoogleCalendarApi.googleCalendarControllerConnect']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Desconectar una cuenta de Google Calendar
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async googleCalendarControllerDisconnect(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.googleCalendarControllerDisconnect(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GoogleCalendarApi.googleCalendarControllerDisconnect']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Obtener URL de autorización sin redirigir
+         * @param {number} [branchId] ID de sucursal (vacío &#x3D; global)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async googleCalendarControllerGetAuthUrl(branchId?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.googleCalendarControllerGetAuthUrl(branchId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GoogleCalendarApi.googleCalendarControllerGetAuthUrl']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Listar conexiones de Google Calendar
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async googleCalendarControllerListTokens(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<GoogleCalendarTokenResponseDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.googleCalendarControllerListTokens(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['GoogleCalendarApi.googleCalendarControllerListTokens']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * GoogleCalendarApi - factory interface
+ */
+export const GoogleCalendarApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = GoogleCalendarApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Callback OAuth de Google
+         * @param {string} code 
+         * @param {string} state 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerCallback(code: string, state: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.googleCalendarControllerCallback(code, state, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Iniciar flujo OAuth con Google Calendar (redirige a Google)
+         * @param {number} [branchId] ID de sucursal (vacío &#x3D; global)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerConnect(branchId?: number, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.googleCalendarControllerConnect(branchId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Desconectar una cuenta de Google Calendar
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerDisconnect(id: number, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.googleCalendarControllerDisconnect(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Obtener URL de autorización sin redirigir
+         * @param {number} [branchId] ID de sucursal (vacío &#x3D; global)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerGetAuthUrl(branchId?: number, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.googleCalendarControllerGetAuthUrl(branchId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Listar conexiones de Google Calendar
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        googleCalendarControllerListTokens(options?: RawAxiosRequestConfig): AxiosPromise<Array<GoogleCalendarTokenResponseDto>> {
+            return localVarFp.googleCalendarControllerListTokens(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * GoogleCalendarApi - object-oriented interface
+ */
+export class GoogleCalendarApi extends BaseAPI {
+    /**
+     * 
+     * @summary Callback OAuth de Google
+     * @param {string} code 
+     * @param {string} state 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public googleCalendarControllerCallback(code: string, state: string, options?: RawAxiosRequestConfig) {
+        return GoogleCalendarApiFp(this.configuration).googleCalendarControllerCallback(code, state, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Iniciar flujo OAuth con Google Calendar (redirige a Google)
+     * @param {number} [branchId] ID de sucursal (vacío &#x3D; global)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public googleCalendarControllerConnect(branchId?: number, options?: RawAxiosRequestConfig) {
+        return GoogleCalendarApiFp(this.configuration).googleCalendarControllerConnect(branchId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Desconectar una cuenta de Google Calendar
+     * @param {number} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public googleCalendarControllerDisconnect(id: number, options?: RawAxiosRequestConfig) {
+        return GoogleCalendarApiFp(this.configuration).googleCalendarControllerDisconnect(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Obtener URL de autorización sin redirigir
+     * @param {number} [branchId] ID de sucursal (vacío &#x3D; global)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public googleCalendarControllerGetAuthUrl(branchId?: number, options?: RawAxiosRequestConfig) {
+        return GoogleCalendarApiFp(this.configuration).googleCalendarControllerGetAuthUrl(branchId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Listar conexiones de Google Calendar
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public googleCalendarControllerListTokens(options?: RawAxiosRequestConfig) {
+        return GoogleCalendarApiFp(this.configuration).googleCalendarControllerListTokens(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * HealthApi - axios parameter creator
  */
 export const HealthApiAxiosParamCreator = function (configuration?: Configuration) {
@@ -4549,6 +4977,44 @@ export const ReservasApiAxiosParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Sincronizar reserva con Google Calendar
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reservationControllerSyncCalendar: async (id: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('reservationControllerSyncCalendar', 'id', id)
+            const localVarPath = `/reservations/{id}/sync-calendar`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Actualizar reserva
          * @param {number} id 
          * @param {UpdateReservationDto} updateReservationDto 
@@ -4784,6 +5250,19 @@ export const ReservasApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Sincronizar reserva con Google Calendar
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async reservationControllerSyncCalendar(id: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SyncCalendarResponseDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.reservationControllerSyncCalendar(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ReservasApi.reservationControllerSyncCalendar']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Actualizar reserva
          * @param {number} id 
          * @param {UpdateReservationDto} updateReservationDto 
@@ -4911,6 +5390,16 @@ export const ReservasApiFactory = function (configuration?: Configuration, baseP
         },
         /**
          * 
+         * @summary Sincronizar reserva con Google Calendar
+         * @param {number} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        reservationControllerSyncCalendar(id: number, options?: RawAxiosRequestConfig): AxiosPromise<SyncCalendarResponseDto> {
+            return localVarFp.reservationControllerSyncCalendar(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Actualizar reserva
          * @param {number} id 
          * @param {UpdateReservationDto} updateReservationDto 
@@ -5030,6 +5519,17 @@ export class ReservasApi extends BaseAPI {
      */
     public reservationControllerStartServiceLine(lineId: number, options?: RawAxiosRequestConfig) {
         return ReservasApiFp(this.configuration).reservationControllerStartServiceLine(lineId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Sincronizar reserva con Google Calendar
+     * @param {number} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public reservationControllerSyncCalendar(id: number, options?: RawAxiosRequestConfig) {
+        return ReservasApiFp(this.configuration).reservationControllerSyncCalendar(id, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

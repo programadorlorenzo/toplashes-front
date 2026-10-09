@@ -3,7 +3,6 @@
 import { Box, Group, ScrollArea, Text } from "@mantine/core";
 import { DateTime } from "luxon";
 import { formatDate } from "@/lib/date-utils";
-import { RESERVATION_STATUS_COLORS } from "@/lib/reservation-utils";
 import type {
   EmployeeResponseDto,
   ReservationResponseDto,
@@ -115,8 +114,11 @@ export function CalendarWeekView({
                       }}
                     >
                       {dayReservations.slice(0, 3).map((reservation) => {
-                        const color =
-                          RESERVATION_STATUS_COLORS[reservation.status];
+                        const empLine = reservation.services.find(
+                          (s) => s.employeeId === employee.id,
+                        );
+                        const empColor = employee.color;
+                        void empLine;
                         const name =
                           customerNames[reservation.customerId] ??
                           `#${reservation.customerId}`;
@@ -133,8 +135,10 @@ export function CalendarWeekView({
                               padding: "2px 6px",
                               textAlign: "left",
                               cursor: "pointer",
-                              backgroundColor: `var(--mantine-color-${color}-1)`,
-                              borderLeft: `3px solid var(--mantine-color-${color}-6)`,
+                              backgroundColor: empColor
+                                ? `${empColor}20`
+                                : "var(--mantine-color-gray-1)",
+                              borderLeft: `3px solid ${empColor ?? "var(--mantine-color-gray-5)"}`,
                             }}
                           >
                             <Text size="xs" fw={600} lineClamp={1}>

@@ -11,6 +11,7 @@ All URIs are relative to *http://localhost*
 |[**reservationControllerFindOne**](#reservationcontrollerfindone) | **GET** /reservations/{id} | Obtener reserva por ID|
 |[**reservationControllerFinishServiceLine**](#reservationcontrollerfinishserviceline) | **POST** /reservations/services/{lineId}/finish | Finalizar atención de una línea de servicio|
 |[**reservationControllerStartServiceLine**](#reservationcontrollerstartserviceline) | **POST** /reservations/services/{lineId}/start | Iniciar atención de una línea de servicio|
+|[**reservationControllerSyncCalendar**](#reservationcontrollersynccalendar) | **POST** /reservations/{id}/sync-calendar | Sincronizar reserva con Google Calendar|
 |[**reservationControllerUpdate**](#reservationcontrollerupdate) | **PUT** /reservations/{id} | Actualizar reserva|
 |[**reservationControllerUpdateServiceLineEstimate**](#reservationcontrollerupdateservicelineestimate) | **PUT** /reservations/services/{lineId}/estimate | Actualizar fin estimado de una línea de servicio|
 |[**reservationControllerUpdateStatus**](#reservationcontrollerupdatestatus) | **PUT** /reservations/{id}/status | Actualizar estado de la reserva|
@@ -384,6 +385,57 @@ const { status, data } = await apiInstance.reservationControllerStartServiceLine
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** |  |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **reservationControllerSyncCalendar**
+> SyncCalendarResponseDto reservationControllerSyncCalendar()
+
+
+### Example
+
+```typescript
+import {
+    ReservasApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new ReservasApi(configuration);
+
+let id: number; // (default to undefined)
+
+const { status, data } = await apiInstance.reservationControllerSyncCalendar(
+    id
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **id** | [**number**] |  | defaults to undefined|
+
+
+### Return type
+
+**SyncCalendarResponseDto**
+
+### Authorization
+
+[bearer](../README.md#bearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** |  |  -  |
+|**404** | Reserva no encontrada |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **firstName** | **string** | Nombres | [default to undefined]
 **lastName** | **string** | Apellidos | [default to undefined]
 **phone** | **string** | Teléfono | [optional] [default to undefined]
+**color** | **string** | Color hexadecimal de la colaboradora (ej: #FF5733) | [optional] [default to undefined]
 **isActive** | **boolean** | Si está activa | [optional] [default to true]
 **userId** | **number** | ID de usuario del sistema | [optional] [default to undefined]
 **branchIds** | **Array&lt;number&gt;** | IDs de sucursales asignadas | [optional] [default to undefined]
@@ -22,6 +23,7 @@ const instance: CreateEmployeeDto = {
     firstName,
     lastName,
     phone,
+    color,
     isActive,
     userId,
     branchIds,

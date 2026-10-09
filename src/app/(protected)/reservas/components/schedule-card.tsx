@@ -32,6 +32,7 @@ interface ScheduleCardProps {
   onBookingClick: (reservationId: number) => void;
   onNewReservation: () => void;
   onSlotSelected: (startTime: string, endTime: string) => void;
+  onSynced?: () => void;
 }
 
 export function ScheduleCard({
@@ -43,6 +44,7 @@ export function ScheduleCard({
   onBookingClick,
   onNewReservation,
   onSlotSelected,
+  onSynced,
 }: ScheduleCardProps) {
   const [slotsOpen, setSlotsOpen] = useState(false);
 
@@ -107,6 +109,7 @@ export function ScheduleCard({
                 key={b.lineId}
                 item={b}
                 onClick={onBookingClick}
+                onSynced={onSynced}
                 compact
               />
             ))}

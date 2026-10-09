@@ -8,6 +8,7 @@ import {
   CreditCard,
   LayoutDashboard,
   Scissors,
+  Settings,
   Shield,
   UserCog,
   Users,
@@ -108,6 +109,12 @@ export const MENU_ITEMS: MenuItemConfig[] = [
     href: "/roles",
     icon: Shield,
     permissions: ["roles.manage"],
+  },
+  {
+    label: "Configuración",
+    href: "/configuracion",
+    icon: Settings,
+    permissions: ["branches.manage"],
   },
 ];
 

@@ -15,6 +15,7 @@ Name | Type | Description | Notes
 **createdById** | **number** |  | [default to undefined]
 **totalAmount** | **string** |  | [default to undefined]
 **discount** | **string** |  | [default to undefined]
+**googleCalendarEventId** | **string** | ID del evento en Google Calendar | [optional] [default to undefined]
 **services** | [**Array&lt;ReservationServiceResponseDto&gt;**](ReservationServiceResponseDto.md) |  | [default to undefined]
 **statusHistory** | [**Array&lt;ReservationStatusHistoryResponseDto&gt;**](ReservationStatusHistoryResponseDto.md) |  | [optional] [default to undefined]
 **createdAt** | **string** |  | [default to undefined]
@@ -36,6 +37,7 @@ const instance: ReservationResponseDto = {
     createdById,
     totalAmount,
     discount,
+    googleCalendarEventId,
     services,
     statusHistory,
     createdAt,

@@ -2,6 +2,7 @@
 
 import {
   Button,
+  ColorInput,
   Group,
   Modal,
   MultiSelect,
@@ -48,6 +49,7 @@ function EmployeeForm({
       firstName: employee?.firstName ?? "",
       lastName: employee?.lastName ?? "",
       phone: employee?.phone ?? "",
+      color: employee?.color ?? "",
       branchIds: (employee?.branchIds ?? []).map(String),
       serviceIds: (employee?.serviceIds ?? []).map(String),
     },
@@ -66,6 +68,7 @@ function EmployeeForm({
         firstName: values.firstName,
         lastName: values.lastName,
         phone: values.phone || undefined,
+        color: values.color || undefined,
       };
 
       let id = employee?.id;
@@ -132,7 +135,33 @@ function EmployeeForm({
             {...form.getInputProps("lastName")}
           />
         </Group>
-        <TextInput label="Teléfono" {...form.getInputProps("phone")} />
+        <Group grow align="flex-start">
+          <TextInput label="Teléfono" {...form.getInputProps("phone")} />
+          <ColorInput
+            label="Color"
+            placeholder="#8B7355"
+            format="hex"
+            swatches={[
+              "#E57373",
+              "#F06292",
+              "#BA68C8",
+              "#9575CD",
+              "#7986CB",
+              "#64B5F6",
+              "#4FC3F7",
+              "#4DD0E1",
+              "#4DB6AC",
+              "#81C784",
+              "#AED581",
+              "#FFD54F",
+              "#FFB74D",
+              "#FF8A65",
+              "#A1887F",
+              "#90A4AE",
+            ]}
+            {...form.getInputProps("color")}
+          />
+        </Group>
         <MultiSelect
           label="Locales asignados"
           data={branchOptions}

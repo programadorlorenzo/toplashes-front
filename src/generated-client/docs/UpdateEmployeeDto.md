@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **firstName** | **string** | Nombres | [optional] [default to undefined]
 **lastName** | **string** | Apellidos | [optional] [default to undefined]
 **phone** | **string** | Teléfono | [optional] [default to undefined]
+**color** | **string** | Color hexadecimal de la colaboradora (ej: #FF5733) | [optional] [default to undefined]
 **isActive** | **boolean** | Si está activa | [optional] [default to undefined]
 **userId** | **number** | ID de usuario del sistema | [optional] [default to undefined]
 
@@ -20,6 +21,7 @@ const instance: UpdateEmployeeDto = {
     firstName,
     lastName,
     phone,
+    color,
     isActive,
     userId,
 };

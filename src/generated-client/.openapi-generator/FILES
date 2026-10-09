@@ -34,6 +34,8 @@ docs/DashboardApi.md
 docs/DisponibilidadApi.md
 docs/EmployeeResponseDto.md
 docs/FinishServiceLineDto.md
+docs/GoogleCalendarApi.md
+docs/GoogleCalendarTokenResponseDto.md
 docs/HealthApi.md
 docs/HorariosApi.md
 docs/LoginDto.md
@@ -58,6 +60,7 @@ docs/ServiceCategoryResponseDto.md
 docs/ServiceResponseDto.md
 docs/ServiciosApi.md
 docs/SucursalesApi.md
+docs/SyncCalendarResponseDto.md
 docs/TopServiceStatDto.md
 docs/UpdateBranchDto.md
 docs/UpdateCustomerDto.md

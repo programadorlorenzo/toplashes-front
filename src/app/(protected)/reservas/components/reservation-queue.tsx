@@ -10,12 +10,14 @@ interface ReservationQueueProps {
   items: BookingItem[];
   onViewReservation: (id: number) => void;
   onNewReservation: () => void;
+  onSynced?: () => void;
 }
 
 export function ReservationQueue({
   items,
   onViewReservation,
   onNewReservation,
+  onSynced,
 }: ReservationQueueProps) {
   const active = items.filter(
     (i) => i.status !== "cancelled" && i.status !== "no_show",
@@ -72,6 +74,7 @@ export function ReservationQueue({
                 key={item.lineId}
                 item={item}
                 onClick={onViewReservation}
+                onSynced={onSynced}
               />
             ))}
           </Group>

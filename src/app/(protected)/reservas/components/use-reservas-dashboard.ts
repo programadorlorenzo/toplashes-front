@@ -25,6 +25,7 @@ export interface BookingItem {
   endTime: string;
   status: ReservationResponseDtoStatusEnum;
   employeeId: number | null;
+  hasCalendarEvent: boolean;
 }
 
 export function useReservasDashboard(branchId: number | null, date: string) {
@@ -123,6 +124,7 @@ export function useReservasDashboard(branchId: number | null, date: string) {
           endTime: line.endTime,
           status: r.status,
           employeeId: line.employeeId,
+          hasCalendarEvent: !!r.googleCalendarEventId,
         });
       }
     }
