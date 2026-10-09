@@ -1,26 +1,51 @@
 "use client";
 
+import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { Badge, Button, Group, Paper, Stack, Text } from "@mantine/core";
-import { Plus, UserCircle } from "lucide-react";
-import { DraggableBookingCompact } from "./draggable-booking-compact";
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Collapse,
+  Group,
+  Paper,
+  Stack,
+  Text,
+} from "@mantine/core";
+import {
+  CalendarClock,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  UserCircle,
+} from "lucide-react";
+import { BookingCard } from "./booking-card";
+import { TimeSlotGrid } from "./time-slot-grid";
 import type { BookingItem } from "./use-reservas-dashboard";
 
 interface ScheduleCardProps {
   employeeId: number;
   employeeName: string;
   bookings: BookingItem[];
+  openTime: string;
+  closeTime: string;
   onBookingClick: (reservationId: number) => void;
   onNewReservation: () => void;
+  onSlotSelected: (startTime: string, endTime: string) => void;
 }
 
 export function ScheduleCard({
   employeeId,
   employeeName,
   bookings,
+  openTime,
+  closeTime,
   onBookingClick,
   onNewReservation,
+  onSlotSelected,
 }: ScheduleCardProps) {
+  const [slotsOpen, setSlotsOpen] = useState(false);
+
   const { setNodeRef, isOver } = useDroppable({
     id: `employee-${employeeId}`,
     data: { employeeId },
@@ -75,38 +100,53 @@ export function ScheduleCard({
           </Group>
         </Group>
 
-        {active.length === 0 ? (
-          <Text size="sm" c="dimmed" fs="italic" py="lg" ta="center">
-            {isOver ? "Soltar aquí para asignar" : "Día libre — sin citas"}
-          </Text>
-        ) : (
-          <Stack gap={6}>
+        {active.length > 0 && (
+          <Stack gap={4}>
             {active.map((b) => (
-              <DraggableBookingCompact
+              <BookingCard
                 key={b.lineId}
                 item={b}
                 onClick={onBookingClick}
+                compact
               />
             ))}
           </Stack>
         )}
 
-        {isOver && active.length > 0 && (
+        {isOver && (
           <Text size="xs" c="green" ta="center" fw={600}>
             Soltar para asignar a {employeeName}
           </Text>
         )}
 
-        <Button
-          variant="light"
-          size="xs"
-          leftSection={<Plus size={14} />}
-          onClick={onNewReservation}
-          fullWidth
-          mt="auto"
-        >
-          Nueva reserva
-        </Button>
+        <Group gap="xs" mt="auto">
+          <Button
+            variant="light"
+            size="xs"
+            leftSection={<Plus size={14} />}
+            onClick={onNewReservation}
+            style={{ flex: 1 }}
+          >
+            Nueva reserva
+          </Button>
+          <ActionIcon
+            variant="light"
+            size="sm"
+            onClick={() => setSlotsOpen((v) => !v)}
+            aria-label="Ver horarios disponibles"
+          >
+            {slotsOpen ? <ChevronUp size={14} /> : <CalendarClock size={14} />}
+          </ActionIcon>
+        </Group>
+
+        <Collapse expanded={slotsOpen}>
+          <TimeSlotGrid
+            openTime={openTime}
+            closeTime={closeTime}
+            bookings={active}
+            onRangeSelected={onSlotSelected}
+          />
+        </Collapse>
       </Stack>
     </Paper>
   );

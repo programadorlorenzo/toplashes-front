@@ -3,7 +3,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { Badge, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { Clock, Plus } from "lucide-react";
-import { DraggableBooking } from "./draggable-booking";
+import { BookingCard } from "./booking-card";
 import type { BookingItem } from "./use-reservas-dashboard";
 
 interface ReservationQueueProps {
@@ -48,7 +48,7 @@ export function ReservationQueue({
               {active.length}
             </Badge>
             <Text size="sm" c="dimmed">
-              sin colaboradora — arrastra a una card para asignar
+              arrastra a una colaboradora para asignar
             </Text>
           </Group>
           <Button
@@ -68,7 +68,7 @@ export function ReservationQueue({
         ) : (
           <Group gap="sm" wrap="wrap">
             {active.map((item) => (
-              <DraggableBooking
+              <BookingCard
                 key={item.lineId}
                 item={item}
                 onClick={onViewReservation}

@@ -32,6 +32,7 @@ interface QuickReserveModalProps {
   date: string;
   employeeId: number | null;
   employeeName: string;
+  prefilledTime?: string;
   services: ServiceResponseDto[];
   servicesById: Record<number, ServiceResponseDto>;
 }
@@ -48,6 +49,7 @@ export function QuickReserveModal({
   date,
   employeeId,
   employeeName,
+  prefilledTime,
   services,
   servicesById,
 }: QuickReserveModalProps) {
@@ -63,7 +65,7 @@ export function QuickReserveModal({
     if (!opened) return;
     setCustomerId(null);
     setServiceId(null);
-    setTime("");
+    setTime(prefilledTime ?? "");
     setChannel("whatsapp");
     setNotes("");
     async function load() {

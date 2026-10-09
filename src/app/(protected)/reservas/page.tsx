@@ -1,18 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Center,
   Grid,
   Loader,
-  Select,
   Stack,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
+import { Search } from "lucide-react";
 import { DatePickerInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
-import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 import { CustomerReservationsModal } from "@/components/customer-reservations-modal";
 import { ReservationDetailModal } from "@/components/reservation-detail-modal";
 import { reservasApi } from "@/lib/api";
@@ -29,15 +36,14 @@ import type { BookingItem } from "./components/use-reservas-dashboard";
 interface QuickReserveTarget {
   employeeId: number | null;
   employeeName: string;
+  prefilledTime?: string;
 }
 
 export default function ReservasPage() {
-  const branches = useBranchStore((s) => s.branches);
   const selectedBranch = useBranchStore((s) => s.selectedBranch);
+  const branches = useBranchStore((s) => s.branches);
+  const branchId = selectedBranch?.id ?? null;
 
-  const [branchId, setBranchId] = useState<number | null>(
-    selectedBranch?.id ?? null,
-  );
   const [date, setDate] = useState(todayISO());
   const [detailId, setDetailId] = useState<number | null>(null);
   const [historyCust, setHistoryCust] = useState<{
@@ -47,19 +53,23 @@ export default function ReservasPage() {
   const [quickTarget, setQuickTarget] = useState<QuickReserveTarget | null>(
     null,
   );
-
-  useEffect(() => {
-    if (selectedBranch && branchId === null) {
-      setBranchId(selectedBranch.id);
-    }
-  }, [selectedBranch, branchId]);
+  const [searchCustomer, setSearchCustomer] = useState("");
 
   const dashboard = useReservasDashboard(branchId, date);
 
-  const branchOptions = branches.map((b) => ({
-    value: String(b.id),
-    label: b.name,
-  }));
+  const currentBranch = branches.find((b) => b.id === branchId);
+  const openTime = currentBranch?.openTime ?? "09:00";
+  const closeTime = currentBranch?.closeTime ?? "20:00";
+
+  const filterByCustomer = (items: BookingItem[]): BookingItem[] => {
+    if (!searchCustomer.trim()) return items;
+    const q = searchCustomer.toLowerCase().trim();
+    return items.filter((b) => b.customerName.toLowerCase().includes(q));
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -69,11 +79,10 @@ export default function ReservasPage() {
     if (!booking) return;
 
     const overId = String(over.id);
-
     let newEmployeeId: number | null = null;
+
     if (overId === "queue") {
       if (booking.employeeId === null) return;
-      newEmployeeId = null;
     } else if (overId.startsWith("employee-")) {
       newEmployeeId = parseInt(overId.replace("employee-", ""), 10);
       if (booking.employeeId === newEmployeeId) return;
@@ -110,25 +119,27 @@ export default function ReservasPage() {
           Reservas del día
         </Title>
         <Text c="dimmed">
-          Arrastra reservas de la cola a una colaboradora para asignarlas.
+          Arrastra reservas entre colaboradoras o la cola. Selecciona horarios
+          para crear.
         </Text>
       </Stack>
 
       <Grid align="flex-end">
-        <Grid.Col span={{ base: 12, sm: 4 }}>
-          <Select
-            label="Local"
-            data={branchOptions}
-            value={branchId ? String(branchId) : null}
-            onChange={(v) => v && setBranchId(parseInt(v, 10))}
-          />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, sm: 4 }}>
+        <Grid.Col span={{ base: 12, sm: 6 }}>
           <DatePickerInput
             label="Fecha"
             value={date}
             onChange={(v) => v && setDate(toISODate(v))}
             valueFormat="DD/MM/YYYY"
+          />
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, sm: 6 }}>
+          <TextInput
+            label="Buscar cliente"
+            placeholder="Nombre del cliente..."
+            leftSection={<Search size={14} />}
+            value={searchCustomer}
+            onChange={(e) => setSearchCustomer(e.currentTarget.value)}
           />
         </Grid.Col>
       </Grid>
@@ -142,19 +153,30 @@ export default function ReservasPage() {
           Selecciona un local para ver las colaboradoras.
         </Text>
       ) : (
-        <DndContext onDragEnd={(e) => void handleDragEnd(e)}>
+        <DndContext sensors={sensors} onDragEnd={(e) => void handleDragEnd(e)}>
           <Grid>
             {dashboard.branchEmployees.map((emp) => (
               <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={emp.id}>
                 <ScheduleCard
                   employeeId={emp.id}
                   employeeName={`${emp.firstName} ${emp.lastName}`}
-                  bookings={dashboard.bookingsByEmployee[emp.id] ?? []}
+                  bookings={filterByCustomer(
+                    dashboard.bookingsByEmployee[emp.id] ?? [],
+                  )}
+                  openTime={openTime}
+                  closeTime={closeTime}
                   onBookingClick={setDetailId}
                   onNewReservation={() =>
                     setQuickTarget({
                       employeeId: emp.id,
                       employeeName: `${emp.firstName} ${emp.lastName}`,
+                    })
+                  }
+                  onSlotSelected={(startTime) =>
+                    setQuickTarget({
+                      employeeId: emp.id,
+                      employeeName: `${emp.firstName} ${emp.lastName}`,
+                      prefilledTime: startTime,
                     })
                   }
                 />
@@ -163,7 +185,7 @@ export default function ReservasPage() {
           </Grid>
 
           <ReservationQueue
-            items={dashboard.queue}
+            items={filterByCustomer(dashboard.queue)}
             onViewReservation={setDetailId}
             onNewReservation={() =>
               setQuickTarget({ employeeId: null, employeeName: "Cola" })
@@ -199,6 +221,7 @@ export default function ReservasPage() {
           date={date}
           employeeId={quickTarget?.employeeId ?? null}
           employeeName={quickTarget?.employeeName ?? ""}
+          prefilledTime={quickTarget?.prefilledTime}
           services={dashboard.services}
           servicesById={dashboard.servicesById}
         />

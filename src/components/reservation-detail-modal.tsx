@@ -28,6 +28,7 @@ import {
   MapPin,
   Phone,
   Scissors,
+  Undo2,
   User,
 } from "lucide-react";
 import type {
@@ -59,6 +60,7 @@ import {
   RESERVATION_STATUS_ACTION_LABELS,
   RESERVATION_STATUS_COLORS,
   RESERVATION_STATUS_LABELS,
+  REVERT_TRANSITIONS,
 } from "@/lib/reservation-utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { PaymentModal } from "@/components/payment-modal";
@@ -193,9 +195,15 @@ export function ReservationDetailModal({
 
   const transitions = reservation
     ? getAllowedStatusTransitions(reservation.status).filter(
-        (status) => status !== "cancelled" || canCancel,
+        (status) =>
+          (status !== "cancelled" || canCancel) &&
+          status !== REVERT_TRANSITIONS[reservation.status],
       )
     : [];
+
+  const revertTo = reservation
+    ? REVERT_TRANSITIONS[reservation.status]
+    : undefined;
 
   const balanceAmount = parseFloat(
     balance?.balance ?? reservation?.totalAmount ?? "0",
@@ -527,6 +535,19 @@ export function ReservationDetailModal({
               {/* Acciones */}
               <Divider mb="sm" />
               <Group justify="flex-end" gap="xs">
+                {canUpdate && revertTo ? (
+                  <Button
+                    variant="subtle"
+                    size="xs"
+                    color="orange"
+                    leftSection={<Undo2 size={14} />}
+                    loading={updating}
+                    onClick={() => void handleStatus(revertTo)}
+                  >
+                    Revertir a {RESERVATION_STATUS_LABELS[revertTo]}
+                  </Button>
+                ) : null}
+                <div style={{ flex: 1 }} />
                 {canPay && !isPaid ? (
                   <Button
                     variant="light"

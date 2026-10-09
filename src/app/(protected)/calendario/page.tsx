@@ -19,7 +19,7 @@ import { notifications } from "@mantine/notifications";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CalendarDayView } from "./components/calendar-day-view";
 import { CalendarWeekView } from "./components/calendar-week-view";
-import { ReservationPreviewDrawer } from "./components/reservation-preview-drawer";
+import { ReservationDetailModal } from "@/components/reservation-detail-modal";
 import type {
   BranchResponseDto,
   EmployeeResponseDto,
@@ -83,8 +83,7 @@ export default function CalendarioPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [previewId, setPreviewId] = useState<number | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [detailId, setDetailId] = useState<number | null>(null);
 
   const branchId = selectedBranch?.id;
 
@@ -166,15 +165,6 @@ export default function CalendarioPage() {
   useEffect(() => {
     void loadCalendarData();
   }, [loadCalendarData]);
-
-  const previewReservation = useMemo(
-    () => reservations.find((r) => r.id === previewId) ?? null,
-    [reservations, previewId],
-  );
-
-  const previewCustomerName = previewReservation
-    ? customerNames[previewReservation.customerId]
-    : undefined;
 
   const openTime = branchDetail?.openTime ?? "09:00";
   const closeTime = branchDetail?.closeTime ?? "20:00";
@@ -307,10 +297,7 @@ export default function CalendarioPage() {
             customerNames={customerNames}
             servicesById={servicesById}
             onEmptySlotClick={handleEmptySlot}
-            onReservationClick={(id) => {
-              setPreviewId(id);
-              setDrawerOpen(true);
-            }}
+            onReservationClick={setDetailId}
           />
         ) : (
           <CalendarWeekView
@@ -318,21 +305,16 @@ export default function CalendarioPage() {
             employees={branchEmployees}
             reservations={reservations}
             customerNames={customerNames}
-            onReservationClick={(id) => {
-              setPreviewId(id);
-              setDrawerOpen(true);
-            }}
+            onReservationClick={setDetailId}
           />
         )}
       </Paper>
 
-      <ReservationPreviewDrawer
-        opened={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        reservation={previewReservation}
-        customerName={previewCustomerName}
-        servicesById={servicesById}
-        employeeNames={employeeNames}
+      <ReservationDetailModal
+        opened={detailId !== null}
+        onClose={() => setDetailId(null)}
+        reservationId={detailId}
+        onUpdated={() => void loadCalendarData()}
       />
     </Stack>
   );

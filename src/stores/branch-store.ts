@@ -4,6 +4,8 @@ import { persist } from "zustand/middleware";
 export interface BranchOption {
   id: number;
   name: string;
+  openTime?: string;
+  closeTime?: string;
 }
 
 interface BranchState {

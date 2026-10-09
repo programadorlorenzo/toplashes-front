@@ -60,7 +60,12 @@ export default function ProtectedLayout({
           const { data } = await sucursalesApi.branchControllerFindAll();
           options = data
             .filter((b) => branchIds.includes(b.id))
-            .map((b) => ({ id: b.id, name: b.name }));
+            .map((b) => ({
+              id: b.id,
+              name: b.name,
+              openTime: b.openTime,
+              closeTime: b.closeTime,
+            }));
         } catch {
           options = branchIds.map((id) => ({
             id,
