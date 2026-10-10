@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   Building2,
   CalendarDays,
   ClipboardList,
@@ -91,12 +90,6 @@ export const MENU_ITEMS: MenuItemConfig[] = [
     href: "/pagos",
     icon: CreditCard,
     permissions: ["payments.read", "payments.create"],
-  },
-  {
-    label: "Reportes",
-    href: "/reportes",
-    icon: BarChart3,
-    permissions: ["reports.read"],
   },
   {
     label: "Usuarios",

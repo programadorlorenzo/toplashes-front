@@ -461,6 +461,35 @@ export interface DailyStatsResponseDto {
      */
     'estimateVsActualDiff': object | null;
 }
+export interface DayReservationCountDto {
+    /**
+     * Fecha YYYY-MM-DD
+     */
+    'date': string;
+    'count': number;
+}
+export interface DayRevenueDto {
+    /**
+     * Fecha YYYY-MM-DD
+     */
+    'date': string;
+    /**
+     * Total cobrado ese día
+     */
+    'total': string;
+}
+export interface EmployeeProductivityDto {
+    'employeeId': number;
+    'employeeName': string;
+    /**
+     * Atenciones completadas
+     */
+    'completedCount': number;
+    /**
+     * Total de servicios asignados
+     */
+    'totalCount': number;
+}
 export interface EmployeeResponseDto {
     'id': number;
     'firstName': string;
@@ -497,6 +526,13 @@ export interface GoogleCalendarTokenResponseDto {
     'isActive': boolean;
     'createdAt': string;
     'updatedAt': string;
+}
+export interface HourCountDto {
+    /**
+     * Hora del día (0-23)
+     */
+    'hour': number;
+    'count': number;
 }
 export interface LoginDto {
     /**
@@ -756,6 +792,10 @@ export interface ServiceResponseDto {
     'branchAssignments': Array<ServiceBranchAssignmentResponseDto>;
     'createdAt': string;
     'updatedAt': string;
+}
+export interface StatusCountDto {
+    'status': string;
+    'count': number;
 }
 export interface SyncCalendarResponseDto {
     /**
@@ -1062,6 +1102,22 @@ export interface UserResponseDto {
     'employeeId'?: number;
     'branches': Array<UserBranchResponseDto>;
     'createdAt': string;
+}
+export interface WeeklyStatsResponseDto {
+    'dailyRevenue': Array<DayRevenueDto>;
+    'reservationsByStatus': Array<StatusCountDto>;
+    'reservationsByHour': Array<HourCountDto>;
+    'employeeProductivity': Array<EmployeeProductivityDto>;
+    'dailyReservationTrend': Array<DayReservationCountDto>;
+    'topServices': Array<TopServiceStatDto>;
+    /**
+     * Tiempo promedio de atención (minutos)
+     */
+    'averageServiceTime'?: object | null;
+    /**
+     * Diferencia promedio estimado vs. real (minutos)
+     */
+    'estimateVsActualDiff'?: object | null;
 }
 
 /**
@@ -2766,6 +2822,61 @@ export const DashboardApiAxiosParamCreator = function (configuration?: Configura
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Estadísticas por rango de fechas
+         * @param {number} branchId 
+         * @param {string} startDate Fecha inicio YYYY-MM-DD
+         * @param {string} endDate Fecha fin YYYY-MM-DD
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        dashboardControllerGetRangeStats: async (branchId: number, startDate: string, endDate: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'branchId' is not null or undefined
+            assertParamExists('dashboardControllerGetRangeStats', 'branchId', branchId)
+            // verify required parameter 'startDate' is not null or undefined
+            assertParamExists('dashboardControllerGetRangeStats', 'startDate', startDate)
+            // verify required parameter 'endDate' is not null or undefined
+            assertParamExists('dashboardControllerGetRangeStats', 'endDate', endDate)
+            const localVarPath = `/dashboard/range`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (branchId !== undefined) {
+                localVarQueryParameter['branchId'] = branchId;
+            }
+
+            if (startDate !== undefined) {
+                localVarQueryParameter['startDate'] = startDate;
+            }
+
+            if (endDate !== undefined) {
+                localVarQueryParameter['endDate'] = endDate;
+            }
+
+            localVarHeaderParameter['Accept'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -2789,6 +2900,21 @@ export const DashboardApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['DashboardApi.dashboardControllerGetDailyStats']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * 
+         * @summary Estadísticas por rango de fechas
+         * @param {number} branchId 
+         * @param {string} startDate Fecha inicio YYYY-MM-DD
+         * @param {string} endDate Fecha fin YYYY-MM-DD
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async dashboardControllerGetRangeStats(branchId: number, startDate: string, endDate: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<WeeklyStatsResponseDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.dashboardControllerGetRangeStats(branchId, startDate, endDate, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DashboardApi.dashboardControllerGetRangeStats']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -2809,6 +2935,18 @@ export const DashboardApiFactory = function (configuration?: Configuration, base
         dashboardControllerGetDailyStats(branchId: number, date: string, options?: RawAxiosRequestConfig): AxiosPromise<DailyStatsResponseDto> {
             return localVarFp.dashboardControllerGetDailyStats(branchId, date, options).then((request) => request(axios, basePath));
         },
+        /**
+         * 
+         * @summary Estadísticas por rango de fechas
+         * @param {number} branchId 
+         * @param {string} startDate Fecha inicio YYYY-MM-DD
+         * @param {string} endDate Fecha fin YYYY-MM-DD
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        dashboardControllerGetRangeStats(branchId: number, startDate: string, endDate: string, options?: RawAxiosRequestConfig): AxiosPromise<WeeklyStatsResponseDto> {
+            return localVarFp.dashboardControllerGetRangeStats(branchId, startDate, endDate, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -2826,6 +2964,19 @@ export class DashboardApi extends BaseAPI {
      */
     public dashboardControllerGetDailyStats(branchId: number, date: string, options?: RawAxiosRequestConfig) {
         return DashboardApiFp(this.configuration).dashboardControllerGetDailyStats(branchId, date, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Estadísticas por rango de fechas
+     * @param {number} branchId 
+     * @param {string} startDate Fecha inicio YYYY-MM-DD
+     * @param {string} endDate Fecha fin YYYY-MM-DD
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public dashboardControllerGetRangeStats(branchId: number, startDate: string, endDate: string, options?: RawAxiosRequestConfig) {
+        return DashboardApiFp(this.configuration).dashboardControllerGetRangeStats(branchId, startDate, endDate, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

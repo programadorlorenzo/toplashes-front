@@ -1,38 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import {
-  Anchor,
-  Badge,
-  Box,
-  Button,
-  Center,
-  Divider,
-  Group,
-  Loader,
-  Modal,
-  Paper,
-  Stack,
-  Text,
-  ThemeIcon,
-  Timeline,
-} from "@mantine/core";
+import { Center, Divider, Loader, Modal, Stack } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import {
-  Calendar,
-  CalendarCheck,
-  CalendarSync,
-  CheckCircle,
-  Clock,
-  CreditCard,
-  MapPin,
-  Phone,
-  Scissors,
-  Undo2,
-  User,
-} from "lucide-react";
 import type {
   BranchResponseDto,
   CustomerResponseDto,
@@ -52,20 +23,17 @@ import {
   sucursalesApi,
 } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { primaryButtonStyles } from "@/lib/crud-styles";
-import { formatDate, formatDateTime, formatTime } from "@/lib/date-utils";
-import { formatSoles, whatsappUrl } from "@/lib/format";
-import { hasAnyPermission } from "@/lib/permissions";
 import {
   getAllowedStatusTransitions,
-  RESERVATION_CHANNEL_LABELS,
-  RESERVATION_STATUS_ACTION_LABELS,
-  RESERVATION_STATUS_COLORS,
   RESERVATION_STATUS_LABELS,
   REVERT_TRANSITIONS,
 } from "@/lib/reservation-utils";
 import { useAuthStore } from "@/stores/auth-store";
+import { hasAnyPermission } from "@/lib/permissions";
 import { PaymentModal } from "@/components/payment-modal";
+import { ReservationDetailActions } from "@/components/reservation-detail-actions";
+import { ReservationDetailBody } from "@/components/reservation-detail-body";
+import { ReservationDetailHeader } from "@/components/reservation-detail-header";
 
 interface ReservationDetailModalProps {
   opened: boolean;
@@ -102,14 +70,18 @@ export function ReservationDetailModal({
   const [paymentOpened, paymentHandlers] = useDisclosure(false);
 
   const servicesById = useMemo(
-    () => Object.fromEntries(services.map((s) => [s.id, s])),
+    () =>
+      Object.fromEntries(services.map((s) => [s.id, s])) as Record<
+        number,
+        ServiceResponseDto
+      >,
     [services],
   );
   const employeeNames = useMemo(
     () =>
       Object.fromEntries(
         employees.map((e) => [e.id, `${e.firstName} ${e.lastName}`]),
-      ),
+      ) as Record<number, string>,
     [employees],
   );
 
@@ -162,9 +134,7 @@ export function ReservationDetailModal({
   }, [reservationId]);
 
   useEffect(() => {
-    if (opened && reservationId) {
-      void load();
-    }
+    if (opened && reservationId) void load();
   }, [opened, reservationId, load]);
 
   const handleStatus = async (status: ReservationResponseDtoStatusEnum) => {
@@ -203,20 +173,13 @@ export function ReservationDetailModal({
       const { data } = await reservasApi.reservationControllerSyncCalendar(
         reservation.id,
       );
-      if (data.synced) {
-        notifications.show({
-          title: "Sincronizado",
-          message: "Reserva sincronizada con Google Calendar.",
-          color: "green",
-        });
-      } else {
-        notifications.show({
-          title: "No sincronizado",
-          message:
-            "No hay cuenta de Google Calendar conectada para este local.",
-          color: "orange",
-        });
-      }
+      notifications.show({
+        title: data.synced ? "Sincronizado" : "No sincronizado",
+        message: data.synced
+          ? "Reserva sincronizada con Google Calendar."
+          : "No hay cuenta de Calendar conectada.",
+        color: data.synced ? "green" : "orange",
+      });
       await load();
     } catch (error) {
       notifications.show({
@@ -231,16 +194,14 @@ export function ReservationDetailModal({
 
   const transitions = reservation
     ? getAllowedStatusTransitions(reservation.status).filter(
-        (status) =>
-          (status !== "cancelled" || canCancel) &&
-          status !== REVERT_TRANSITIONS[reservation.status],
+        (s) =>
+          (s !== "cancelled" || canCancel) &&
+          s !== REVERT_TRANSITIONS[reservation.status],
       )
     : [];
-
   const revertTo = reservation
     ? REVERT_TRANSITIONS[reservation.status]
     : undefined;
-
   const balanceAmount = parseFloat(
     balance?.balance ?? reservation?.totalAmount ?? "0",
   );
@@ -256,9 +217,7 @@ export function ReservationDetailModal({
         withCloseButton={false}
         padding={0}
         radius="md"
-        styles={{
-          body: { padding: 0 },
-        }}
+        styles={{ body: { padding: 0 } }}
       >
         {loading || !reservation ? (
           <Center py="xl">
@@ -266,383 +225,38 @@ export function ReservationDetailModal({
           </Center>
         ) : (
           <>
-            {/* Header con logo y estado */}
-            <Box
-              px="lg"
-              py="md"
-              style={{
-                background:
-                  "linear-gradient(135deg, hsl(28 11% 60%) 0%, hsl(24 10% 48%) 100%)",
-                borderRadius:
-                  "var(--mantine-radius-md) var(--mantine-radius-md) 0 0",
-              }}
-            >
-              <Group justify="space-between" align="center">
-                <Group gap="sm">
-                  <Box
-                    style={{
-                      width: 36,
-                      height: 36,
-                      position: "relative",
-                      filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.2))",
-                    }}
-                  >
-                    <Image
-                      src="/brand/logo-toplashes.jpg"
-                      alt="Top Lashes"
-                      fill
-                      sizes="36px"
-                      style={{
-                        objectFit: "contain",
-                        borderRadius: "4px",
-                      }}
-                    />
-                  </Box>
-                  <Stack gap={0}>
-                    <Text size="sm" fw={600} c="white">
-                      Reserva #{reservation.id}
-                    </Text>
-                    <Text size="xs" c="rgba(255,255,255,0.7)">
-                      {formatDate(reservation.date)} ·{" "}
-                      {RESERVATION_CHANNEL_LABELS[reservation.channel]}
-                    </Text>
-                  </Stack>
-                </Group>
-                <Group gap="xs">
-                  <Badge
-                    color={RESERVATION_STATUS_COLORS[reservation.status]}
-                    size="lg"
-                    variant="filled"
-                    radius="sm"
-                  >
-                    {RESERVATION_STATUS_LABELS[reservation.status]}
-                  </Badge>
-                  {reservation.googleCalendarEventId ? (
-                    <Badge
-                      color="teal"
-                      size="lg"
-                      variant="light"
-                      radius="sm"
-                      leftSection={<CalendarCheck size={12} />}
-                    >
-                      Calendar
-                    </Badge>
-                  ) : null}
-                  {isPaid ? (
-                    <Badge color="green" size="lg" variant="filled" radius="sm">
-                      Pagado
-                    </Badge>
-                  ) : null}
-                </Group>
-              </Group>
-            </Box>
-
+            <ReservationDetailHeader
+              reservation={reservation}
+              isPaid={isPaid}
+            />
             <Stack gap={0} px="lg" py="md">
-              {/* Info cards */}
-              <Group grow wrap="wrap" gap="sm" mb="md">
-                <Paper
-                  p="sm"
-                  radius="sm"
-                  withBorder
-                  style={{ borderColor: "hsl(30 14% 88%)" }}
-                >
-                  <Group gap="xs" mb={4}>
-                    <ThemeIcon
-                      size="sm"
-                      variant="light"
-                      color="gray"
-                      radius="xl"
-                    >
-                      <User size={12} />
-                    </ThemeIcon>
-                    <Text size="xs" c="dimmed" fw={600}>
-                      Clienta
-                    </Text>
-                  </Group>
-                  {customer ? (
-                    <>
-                      <Text size="sm" fw={500}>
-                        {customer.firstName} {customer.lastName}
-                      </Text>
-                      <Anchor
-                        href={whatsappUrl(customer.whatsapp)}
-                        target="_blank"
-                        size="xs"
-                      >
-                        <Group gap={4}>
-                          <Phone size={11} />
-                          {customer.whatsapp}
-                        </Group>
-                      </Anchor>
-                    </>
-                  ) : (
-                    <Text size="sm" c="dimmed">
-                      —
-                    </Text>
-                  )}
-                </Paper>
-
-                <Paper
-                  p="sm"
-                  radius="sm"
-                  withBorder
-                  style={{ borderColor: "hsl(30 14% 88%)" }}
-                >
-                  <Group gap="xs" mb={4}>
-                    <ThemeIcon
-                      size="sm"
-                      variant="light"
-                      color="gray"
-                      radius="xl"
-                    >
-                      <MapPin size={12} />
-                    </ThemeIcon>
-                    <Text size="xs" c="dimmed" fw={600}>
-                      Local
-                    </Text>
-                  </Group>
-                  <Text size="sm" fw={500}>
-                    {branch?.name ?? `Local ${reservation.branchId}`}
-                  </Text>
-                </Paper>
-
-                <Paper
-                  p="sm"
-                  radius="sm"
-                  withBorder
-                  style={{ borderColor: "hsl(30 14% 88%)" }}
-                >
-                  <Group gap="xs" mb={4}>
-                    <ThemeIcon
-                      size="sm"
-                      variant="light"
-                      color="gray"
-                      radius="xl"
-                    >
-                      <CreditCard size={12} />
-                    </ThemeIcon>
-                    <Text size="xs" c="dimmed" fw={600}>
-                      Pago
-                    </Text>
-                  </Group>
-                  <Text size="sm" fw={600}>
-                    {formatSoles(
-                      parseFloat(
-                        balance?.totalAmount ?? reservation.totalAmount,
-                      ),
-                    )}
-                  </Text>
-                  {isPaid ? (
-                    <Group gap={4}>
-                      <CheckCircle size={12} color="green" />
-                      <Text size="xs" c="green" fw={500}>
-                        Pagado completo
-                      </Text>
-                    </Group>
-                  ) : (
-                    <Text size="xs" c="red" fw={500}>
-                      Saldo: {formatSoles(balanceAmount)}
-                    </Text>
-                  )}
-                </Paper>
-              </Group>
-
-              {/* Servicios */}
-              <Paper
-                p="sm"
-                radius="sm"
-                mb="md"
-                withBorder
-                style={{ borderColor: "hsl(30 14% 88%)" }}
-              >
-                <Group gap="xs" mb="xs">
-                  <ThemeIcon size="sm" variant="light" color="gray" radius="xl">
-                    <Scissors size={12} />
-                  </ThemeIcon>
-                  <Text size="xs" c="dimmed" fw={600}>
-                    Servicios
-                  </Text>
-                </Group>
-                <Stack gap={6}>
-                  {reservation.services.map((line) => (
-                    <Group key={line.id} justify="space-between" wrap="nowrap">
-                      <Stack gap={0}>
-                        <Text size="sm" fw={500}>
-                          {servicesById[line.serviceId]?.name ??
-                            `Servicio #${line.serviceId}`}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          {line.employeeId !== null
-                            ? (employeeNames[line.employeeId] ?? "Colaboradora")
-                            : "Sin asignar"}
-                        </Text>
-                      </Stack>
-                      <Stack gap={0} align="flex-end">
-                        <Text size="sm" fw={500}>
-                          {formatSoles(parseFloat(line.agreedPrice))}
-                        </Text>
-                        <Group gap={4}>
-                          <Clock size={11} />
-                          <Text size="xs" c="dimmed">
-                            {formatTime(line.startTime)} –{" "}
-                            {formatTime(line.endTime)}
-                          </Text>
-                        </Group>
-                      </Stack>
-                    </Group>
-                  ))}
-                </Stack>
-                {reservation.notes ? (
-                  <>
-                    <Divider my="xs" />
-                    <Text size="xs" c="dimmed" fs="italic">
-                      {reservation.notes}
-                    </Text>
-                  </>
-                ) : null}
-              </Paper>
-
-              {/* Movimientos de pago */}
-              {payments.length > 0 ? (
-                <Paper
-                  p="sm"
-                  radius="sm"
-                  mb="md"
-                  withBorder
-                  style={{ borderColor: "hsl(30 14% 88%)" }}
-                >
-                  <Text size="xs" c="dimmed" fw={600} mb="xs">
-                    Movimientos de pago
-                  </Text>
-                  {payments.map((p) => (
-                    <Group key={p.id} justify="space-between">
-                      <Text size="xs" c="dimmed">
-                        {formatDateTime(p.createdAt)}
-                      </Text>
-                      <Text size="xs" fw={500}>
-                        {formatSoles(parseFloat(p.amount))}
-                      </Text>
-                    </Group>
-                  ))}
-                </Paper>
-              ) : null}
-
-              {/* Historial de estados */}
-              {(reservation.statusHistory?.length ?? 0) > 0 ? (
-                <Paper
-                  p="sm"
-                  radius="sm"
-                  mb="md"
-                  withBorder
-                  style={{ borderColor: "hsl(30 14% 88%)" }}
-                >
-                  <Group gap="xs" mb="xs">
-                    <ThemeIcon
-                      size="sm"
-                      variant="light"
-                      color="gray"
-                      radius="xl"
-                    >
-                      <Calendar size={12} />
-                    </ThemeIcon>
-                    <Text size="xs" c="dimmed" fw={600}>
-                      Historial
-                    </Text>
-                  </Group>
-                  <Timeline
-                    active={reservation.statusHistory!.length - 1}
-                    bulletSize={14}
-                    lineWidth={2}
-                    color="gray"
-                  >
-                    {reservation.statusHistory!.map((entry) => (
-                      <Timeline.Item
-                        key={entry.id}
-                        title={
-                          <Text size="xs" fw={500}>
-                            {RESERVATION_STATUS_LABELS[entry.toStatus]}
-                          </Text>
-                        }
-                      >
-                        <Text size="xs" c="dimmed">
-                          {formatDateTime(entry.changedAt)}
-                          {entry.fromStatus
-                            ? ` · desde ${RESERVATION_STATUS_LABELS[entry.fromStatus]}`
-                            : ""}
-                        </Text>
-                        {entry.reason ? (
-                          <Text size="xs">{entry.reason}</Text>
-                        ) : null}
-                      </Timeline.Item>
-                    ))}
-                  </Timeline>
-                </Paper>
-              ) : null}
-
-              {/* Acciones */}
+              <ReservationDetailBody
+                reservation={reservation}
+                customer={customer}
+                branch={branch}
+                balance={balance}
+                payments={payments}
+                servicesById={servicesById}
+                employeeNames={employeeNames}
+                isPaid={isPaid}
+                balanceAmount={balanceAmount}
+              />
               <Divider mb="sm" />
-              <Group justify="flex-end" gap="xs">
-                {canUpdate && revertTo ? (
-                  <Button
-                    variant="subtle"
-                    size="xs"
-                    color="orange"
-                    leftSection={<Undo2 size={14} />}
-                    loading={updating}
-                    onClick={() => void handleStatus(revertTo)}
-                  >
-                    Revertir a {RESERVATION_STATUS_LABELS[revertTo]}
-                  </Button>
-                ) : null}
-                {canUpdate ? (
-                  <Button
-                    variant="subtle"
-                    size="xs"
-                    color={reservation.googleCalendarEventId ? "teal" : "gray"}
-                    leftSection={<CalendarSync size={14} />}
-                    loading={syncing}
-                    onClick={() => void handleSyncCalendar()}
-                  >
-                    {reservation.googleCalendarEventId
-                      ? "Resincronizar"
-                      : "Sincronizar Calendar"}
-                  </Button>
-                ) : null}
-                <div style={{ flex: 1 }} />
-                {canPay && !isPaid ? (
-                  <Button
-                    variant="light"
-                    size="xs"
-                    leftSection={<CreditCard size={14} />}
-                    onClick={paymentHandlers.open}
-                  >
-                    Registrar pago
-                  </Button>
-                ) : null}
-                {canUpdate
-                  ? transitions.map((status) => (
-                      <Button
-                        key={status}
-                        size="xs"
-                        variant={status === "cancelled" ? "outline" : "filled"}
-                        color={status === "cancelled" ? "red" : undefined}
-                        styles={
-                          status === "cancelled"
-                            ? undefined
-                            : primaryButtonStyles
-                        }
-                        loading={updating}
-                        onClick={() => void handleStatus(status)}
-                      >
-                        {RESERVATION_STATUS_ACTION_LABELS[status] ??
-                          RESERVATION_STATUS_LABELS[status]}
-                      </Button>
-                    ))
-                  : null}
-                <Button variant="default" size="xs" onClick={onClose}>
-                  Cerrar
-                </Button>
-              </Group>
+              <ReservationDetailActions
+                transitions={transitions}
+                revertTo={revertTo}
+                hasCalendarEvent={!!reservation.googleCalendarEventId}
+                isPaid={isPaid}
+                canUpdate={canUpdate}
+                canCancel={canCancel}
+                canPay={canPay}
+                updating={updating}
+                syncing={syncing}
+                onStatus={(s) => void handleStatus(s)}
+                onSync={() => void handleSyncCalendar()}
+                onPayment={paymentHandlers.open}
+                onClose={onClose}
+              />
             </Stack>
           </>
         )}
